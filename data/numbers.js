@@ -42,7 +42,7 @@ var DATA_NUMBERS = [
   {id: "num_38", front: "いちまん", back: "10.000", romaji: "ichiman", category: "numbers", sub: "basic"},
   {id: "num_39", front: "じゅうまん", back: "100.000", romaji: "juuman", category: "numbers", sub: "basic"},
   {id: "num_40", front: "ひゃくまん", back: "1.000.000", romaji: "hyakuman", category: "numbers", sub: "basic"},
-  {id: "num_41", front: "れい", back: "0", romaji: "rei", hint: "auch ゼロ (zero)", category: "numbers", sub: "basic"},
+  {id: "num_41", front: "れい", back: "0", romaji: "rei", hint: "auch ゼロ", category: "numbers", sub: "basic"},
 
   // ============================================================
   // sub: "counters" — Japanese counters
