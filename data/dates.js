@@ -88,5 +88,15 @@ var DATA_DATES = [
   {id: "date_80", front: "いま", back: "jetzt", romaji: "ima", category: "dates", sub: "expressions"},
   {id: "date_81", front: "いつ", back: "wann?", romaji: "itsu", category: "dates", sub: "expressions"},
   {id: "date_82", front: "なんじ", back: "welche Uhrzeit?", romaji: "nanji", category: "dates", sub: "expressions"},
-  {id: "date_83", front: "たんじょうび", back: "Geburtstag", romaji: "tanjoubi", category: "dates", sub: "expressions"}
+  {id: "date_83", front: "たんじょうび", back: "Geburtstag", romaji: "tanjoubi", category: "dates", sub: "expressions"},
+
+  // Seasons
+  {id: "date_84", front: "はる", back: "Frühling", romaji: "haru", category: "dates", sub: "seasons"},
+  {id: "date_85", front: "なつ", back: "Sommer", romaji: "natsu", category: "dates", sub: "seasons"},
+  {id: "date_86", front: "あき", back: "Herbst", romaji: "aki", category: "dates", sub: "seasons"},
+  {id: "date_87", front: "ふゆ", back: "Winter", romaji: "fuyu", category: "dates", sub: "seasons"},
+  {id: "date_88", front: "はるやすみ", back: "Frühlingsferien", romaji: "haruyasumi", category: "dates", sub: "seasons"},
+  {id: "date_89", front: "なつやすみ", back: "Sommerferien", romaji: "natsuyasumi", category: "dates", sub: "seasons"},
+  {id: "date_90", front: "あきやすみ", back: "Herbstferien", romaji: "akiyasumi", category: "dates", sub: "seasons"},
+  {id: "date_91", front: "ふゆやすみ", back: "Winterferien", romaji: "fuyuyasumi", category: "dates", sub: "seasons"}
 ];

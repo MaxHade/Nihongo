@@ -983,6 +983,69 @@ body {
   }
 }
 
+/* ===== Card Status Badges ===== */
+.card-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.status-new {
+  background: var(--border);
+  color: var(--text-secondary);
+}
+
+.status-learning {
+  background: rgba(243, 156, 18, 0.2);
+  color: var(--warning);
+}
+
+.status-mastered {
+  background: rgba(39, 174, 96, 0.2);
+  color: var(--success);
+}
+
+/* ===== Global Search ===== */
+#global-search {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  margin-bottom: 12px;
+  outline: none;
+}
+
+#global-search:focus {
+  border-color: var(--accent);
+}
+
+.global-search-results {
+  margin-bottom: 16px;
+}
+
+.global-search-group-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 12px 0 6px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-no-results {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+  font-size: 0.95rem;
+}
+
 /* ===== Utility ===== */
 .hidden {
   display: none !important;

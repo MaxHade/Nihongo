@@ -20,7 +20,7 @@ const App = (() => {
         all_rev: 'Alles (Rückwärts)'
       }
     },
-    dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke' } },
+    dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten' } },
     times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben' } },
@@ -51,6 +51,18 @@ const App = (() => {
 
   function isKanaForward(card) {
     return !card.id.includes('_rev_') && (card.category === 'hiragana' || card.category === 'katakana');
+  }
+
+  // ===== Card Status Badge =====
+  function getCardStatusBadge(cardId) {
+    const progress = Storage.getProgress(cardId);
+    if (!progress) {
+      return '<span class="card-status status-new">Neu</span>';
+    }
+    if (progress.lastRating === 'again' || progress.lastRating === 'hard') {
+      return '<span class="card-status status-learning">Lernend</span>';
+    }
+    return '<span class="card-status status-mastered">Gemeistert</span>';
   }
 
   // ===== Theme =====
@@ -197,6 +209,12 @@ const App = (() => {
     view.classList.add('active');
     document.querySelector('#view-dashboard h2').textContent = 'Kategorien';
 
+    // Clean up global search elements from list-overview
+    const oldSearch = document.getElementById('global-search');
+    if (oldSearch) oldSearch.remove();
+    const oldSearchResults = document.getElementById('global-search-results');
+    if (oldSearchResults) oldSearchResults.remove();
+
     renderDashboardHeader();
 
     // Remove old daily challenge card if exists
@@ -304,6 +322,9 @@ const App = (() => {
 
       const dueCards = Flashcard.getDueCards(category, sub);
 
+      const nochmalCards = Flashcard.getNochmalCards(category, sub);
+      const nochmalCount = nochmalCards.length;
+
       const el = document.createElement('div');
       el.className = 'subcategory-card';
       el.innerHTML = `
@@ -311,7 +332,7 @@ const App = (() => {
         <div class="category-count">${cards.length} Karten · ${dueCards.length} fällig</div>
         <div class="sub-actions">
           <button class="sub-action-btn" data-action="learn">Lernen</button>
-          <button class="sub-action-btn" data-action="errors">Nur Nochmal</button>
+          ${nochmalCount > 0 ? `<button class="sub-action-btn" data-action="errors">Nur Nochmal (${nochmalCount})</button>` : ''}
           <button class="sub-action-btn" data-action="list">Liste</button>
         </div>
       `;
@@ -320,10 +341,13 @@ const App = (() => {
         e.stopPropagation();
         navigate(`#learn/${category}/${sub}`);
       });
-      el.querySelector('[data-action="errors"]').addEventListener('click', (e) => {
-        e.stopPropagation();
-        navigate(`#learn/${category}/${sub}/errors`);
-      });
+      const errorsBtn = el.querySelector('[data-action="errors"]');
+      if (errorsBtn) {
+        errorsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigate(`#learn/${category}/${sub}/errors`);
+        });
+      }
       el.querySelector('[data-action="list"]').addEventListener('click', (e) => {
         e.stopPropagation();
         navigate(`#list/${category}/${sub}`);
@@ -692,6 +716,66 @@ const App = (() => {
     }, 4000);
   }
 
+  // ===== Global Search =====
+  function renderGlobalSearch(query) {
+    const container = document.getElementById('global-search-results');
+    if (!container) return;
+
+    if (!query || query.length < 2) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      // Show the grid again
+      document.getElementById('category-grid').style.display = '';
+      return;
+    }
+
+    // Hide category grid while searching
+    document.getElementById('category-grid').style.display = 'none';
+    container.style.display = 'block';
+
+    const q = query.toLowerCase();
+    const allCards = Flashcard.getAllCards().filter(c => !c.id.includes('_rev_'));
+    const matches = allCards.filter(c =>
+      c.front.includes(query) ||
+      c.back.toLowerCase().includes(q) ||
+      (c.romaji && c.romaji.toLowerCase().includes(q)) ||
+      (c.hint && c.hint.toLowerCase().includes(q))
+    ).slice(0, 50);
+
+    if (matches.length === 0) {
+      container.innerHTML = '<div class="search-no-results">Keine Treffer gefunden.</div>';
+      return;
+    }
+
+    // Group by category
+    const grouped = {};
+    matches.forEach(card => {
+      if (!grouped[card.category]) grouped[card.category] = [];
+      grouped[card.category].push(card);
+    });
+
+    let html = '';
+    for (const [cat, cards] of Object.entries(grouped)) {
+      const meta = CATEGORY_META[cat];
+      const label = meta ? `${meta.emoji} ${meta.name}` : cat;
+      html += `<div class="global-search-group-title">${label}</div>`;
+      html += '<div class="list-cards">';
+      cards.forEach(card => {
+        const romaji = card.romaji || '';
+        const meaning = card.back || '';
+        const hint = card.hint ? ` (${card.hint})` : '';
+        const badge = getCardStatusBadge(card.id);
+        html += `<div class="list-card-item">
+          <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
+          <div class="list-card-romaji">${escapeHtml(romaji)}</div>
+          ${meaning ? `<div class="list-card-hint">${escapeHtml(meaning)}${escapeHtml(hint)}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  }
+
   // ===== List Overview =====
   function showListOverview() {
     const view = document.getElementById('view-dashboard');
@@ -707,6 +791,30 @@ const App = (() => {
     if (oldDailyInList) oldDailyInList.remove();
 
     document.querySelector('#view-dashboard h2').textContent = 'Listen';
+
+    // Global search field
+    let searchInput = document.getElementById('global-search');
+    let searchResults = document.getElementById('global-search-results');
+    if (!searchInput) {
+      searchInput = document.createElement('input');
+      searchInput.type = 'text';
+      searchInput.id = 'global-search';
+      searchInput.placeholder = 'Alle Karten durchsuchen...';
+      grid.parentNode.insertBefore(searchInput, grid);
+    }
+    if (!searchResults) {
+      searchResults = document.createElement('div');
+      searchResults.id = 'global-search-results';
+      searchResults.className = 'global-search-results';
+      searchResults.style.display = 'none';
+      grid.parentNode.insertBefore(searchResults, grid);
+    }
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchResults.style.display = 'none';
+    grid.style.display = '';
+
+    searchInput.oninput = () => renderGlobalSearch(searchInput.value.trim());
 
     // Difficult cards virtual entry
     const difficultCards = getDifficultCards();
@@ -816,7 +924,7 @@ const App = (() => {
 
       const content = document.getElementById('list-content');
       let tableHtml = `<table class="list-table"><thead><tr>
-        <th>Japanisch</th><th>Romaji</th><th>Bedeutung</th>
+        <th>Japanisch</th><th>Romaji</th><th>Bedeutung</th><th>Status</th>
       </tr></thead><tbody>`;
       let cardsHtml = '<div class="list-cards">';
 
@@ -824,13 +932,15 @@ const App = (() => {
         const romaji = card.romaji || '';
         const meaning = card.back || '';
         const hint = card.hint ? ` (${card.hint})` : '';
+        const badge = getCardStatusBadge(card.id);
         tableHtml += `<tr>
           <td class="jp-col">${escapeHtml(card.front)}</td>
           <td>${escapeHtml(romaji)}</td>
           <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
+          <td>${badge}</td>
         </tr>`;
         cardsHtml += `<div class="list-card-item">
-          <div class="list-card-jp">${escapeHtml(card.front)}</div>
+          <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
           <div class="list-card-romaji">${escapeHtml(romaji)}</div>
           <div class="list-card-hint">${escapeHtml(meaning)}${escapeHtml(hint)}</div>
         </div>`;
@@ -907,20 +1017,23 @@ const App = (() => {
         <th>Japanisch</th>
         <th>${col2Header}</th>
         ${col3Header ? `<th>${col3Header}</th>` : ''}
+        <th>Status</th>
       </tr></thead><tbody>`;
 
       // Cards for mobile
       let cardsHtml = '<div class="list-cards">';
 
       filtered.forEach(card => {
+        const badge = getCardStatusBadge(card.id);
         if (isKana) {
           // Kana: front = character, back = romaji
           tableHtml += `<tr>
             <td class="jp-col">${escapeHtml(card.front)}</td>
             <td>${escapeHtml(card.back)}</td>
+            <td>${badge}</td>
           </tr>`;
           cardsHtml += `<div class="list-card-item">
-            <div class="list-card-jp">${escapeHtml(card.front)}</div>
+            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(card.back)}</div>
           </div>`;
         } else {
@@ -932,9 +1045,10 @@ const App = (() => {
             <td class="jp-col">${escapeHtml(card.front)}</td>
             <td>${escapeHtml(romaji)}</td>
             <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
+            <td>${badge}</td>
           </tr>`;
           cardsHtml += `<div class="list-card-item">
-            <div class="list-card-jp">${escapeHtml(card.front)}</div>
+            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(romaji)}</div>
             <div class="list-card-hint">${escapeHtml(meaning)}${escapeHtml(hint)}</div>
           </div>`;
