@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e74c3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>日本語 – Japanisch Lernen</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/favicon.ico">
+</head>
+<body>
+  <header id="app-header">
+    <h1 id="header-title">日本語</h1>
+    <button id="theme-toggle" aria-label="Dark/Light Mode umschalten">🌙</button>
+  </header>
+
+  <main id="app-main">
+    <!-- Dashboard View -->
+    <section id="view-dashboard" class="view active">
+      <h2>Kategorien</h2>
+      <div id="category-grid" class="category-grid"></div>
+    </section>
+
+    <!-- Subcategory View -->
+    <section id="view-subcategory" class="view">
+      <button class="back-btn" data-back="dashboard">← Zurück</button>
+      <h2 id="subcategory-title"></h2>
+      <div id="subcategory-grid" class="category-grid"></div>
+    </section>
+
+    <!-- Flashcard View -->
+    <section id="view-flashcard" class="view">
+      <button class="back-btn" id="flashcard-back">← Zurück</button>
+      <div id="flashcard-header">
+        <span id="flashcard-progress">0 / 0</span>
+        <label id="error-mode-label">
+          <input type="checkbox" id="error-mode-toggle"> Nur Fehler
+        </label>
+      </div>
+      <div id="flashcard-container">
+        <div id="flashcard" class="flashcard">
+          <div id="card-front" class="card-front"></div>
+          <div id="card-hint" class="card-hint"></div>
+          <button id="card-audio" class="audio-btn" aria-label="Aussprechen">🔊</button>
+        </div>
+        <div id="answer-section">
+          <form id="answer-form">
+            <input type="text" id="answer-input" placeholder="Antwort eingeben..." autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button type="submit" id="check-btn">Prüfen</button>
+          </form>
+          <button id="reveal-btn" class="primary-btn hidden">Aufdecken</button>
+          <div id="answer-result" class="answer-result hidden"></div>
+          <div id="rating-buttons" class="rating-buttons hidden">
+            <button class="rate-btn rate-again" data-rating="again">Nochmal</button>
+            <button class="rate-btn rate-hard" data-rating="hard">Schwer</button>
+            <button class="rate-btn rate-good" data-rating="good">Gut</button>
+            <button class="rate-btn rate-easy" data-rating="easy">Einfach</button>
+          </div>
+        </div>
+      </div>
+      <!-- Session Summary -->
+      <div id="session-summary" class="session-summary hidden">
+        <h3>Zusammenfassung</h3>
+        <div id="summary-stats"></div>
+        <button id="summary-restart" class="primary-btn">Nochmal üben</button>
+        <button id="summary-back" class="secondary-btn">Zurück</button>
+      </div>
+    </section>
+
+    <!-- List View -->
+    <section id="view-list" class="view">
+      <button class="back-btn" id="list-back">← Zurück</button>
+      <h2 id="list-title"></h2>
+      <input type="text" id="list-search" placeholder="Suchen..." autocomplete="off">
+      <div id="list-content"></div>
+    </section>
+
+    <!-- Stats View -->
+    <section id="view-stats" class="view">
+      <h2>Statistiken</h2>
+      <div id="stats-today" class="stats-section">
+        <h3>Heute</h3>
+        <div id="stats-today-content"></div>
+      </div>
+      <div id="stats-overall" class="stats-section">
+        <h3>Gesamt</h3>
+        <div id="stats-overall-content"></div>
+      </div>
+      <div id="stats-categories" class="stats-section">
+        <h3>Pro Kategorie</h3>
+        <div id="stats-categories-content"></div>
+      </div>
+      <div class="stats-section">
+        <h3>Daten</h3>
+        <div class="data-actions">
+          <button id="export-btn" class="secondary-btn">Daten exportieren</button>
+          <button id="import-btn" class="secondary-btn">Daten importieren</button>
+          <input type="file" id="import-file" accept=".json" class="hidden">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-view="dashboard">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Lernen</span>
+    </button>
+    <button class="nav-btn" data-view="list-overview">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Listen</span>
+    </button>
+    <button class="nav-btn" data-view="stats">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Statistik</span>
+    </button>
+  </nav>
+
+  <!-- Scripts: data first, then modules, then app -->
+  <script src="data/hiragana.js"></script>
+  <script src="data/katakana.js"></script>
+  <script src="data/dates.js"></script>
+  <script src="data/times.js"></script>
+  <script src="data/numbers.js"></script>
+  <script src="data/vocabulary.js"></script>
+  <script src="data/particles.js"></script>
+  <script src="data/greetings.js"></script>
+  <script src="data/lessons.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/flashcard.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
