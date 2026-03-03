@@ -441,12 +441,22 @@ body {
   line-height: 2;
 }
 
-.summary-correct {
+.summary-easy {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.summary-good {
   color: var(--success);
   font-weight: 600;
 }
 
-.summary-wrong {
+.summary-hard {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.summary-again {
   color: var(--danger);
   font-weight: 600;
 }
@@ -730,13 +740,25 @@ body {
   overflow: hidden;
 }
 
-.week-chart-bar-correct {
+.week-chart-bar-easy {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+.week-chart-bar-good {
   height: 100%;
   background: var(--success);
   transition: width 0.4s ease;
 }
 
-.week-chart-bar-wrong {
+.week-chart-bar-hard {
+  height: 100%;
+  background: var(--warning);
+  transition: width 0.4s ease;
+}
+
+.week-chart-bar-again {
   height: 100%;
   background: var(--danger);
   transition: width 0.4s ease;
@@ -817,6 +839,17 @@ body {
   height: 10px;
 }
 
+.heatmap-separator {
+  width: 4px;
+  height: 12px;
+  background: transparent;
+}
+
+.heatmap-separator-label {
+  width: 4px !important;
+  flex: 0 0 4px !important;
+}
+
 /* ===== Confetti ===== */
 #confetti-container {
   position: fixed;
@@ -847,21 +880,6 @@ body {
     opacity: 0;
     transform: translateY(100vh) rotate(720deg) scale(0.5);
   }
-}
-
-/* ===== Reminders ===== */
-.reminder-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.reminder-hint {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
 }
 
 /* ===== Utility ===== */

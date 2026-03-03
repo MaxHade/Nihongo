@@ -3,31 +3,26 @@ const Stats = (() => {
   function getCategoryStats(category) {
     const cards = Flashcard.getCardsByCategory(category);
     const total = cards.length;
-    if (total === 0) return { total: 0, learned: 0, correct: 0, wrong: 0, percent: 0 };
+    if (total === 0) return { total: 0, learned: 0, percent: 0, ratings: { again: 0, hard: 0, good: 0, easy: 0 } };
 
     let learned = 0;
-    let correct = 0;
-    let wrong = 0;
+    const ratings = { again: 0, hard: 0, good: 0, easy: 0 };
 
     cards.forEach(card => {
       const p = Storage.getProgress(card.id);
       if (p) {
         learned++;
-        correct += p.correct || 0;
-        wrong += p.wrong || 0;
+        if (p.lastRating && ratings[p.lastRating] !== undefined) {
+          ratings[p.lastRating]++;
+        }
       }
     });
-
-    const attempts = correct + wrong;
-    const hitRate = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
 
     return {
       total,
       learned,
-      correct,
-      wrong,
       percent: Math.round((learned / total) * 100),
-      hitRate
+      ratings
     };
   }
 
@@ -36,24 +31,23 @@ const Stats = (() => {
     const total = allCards.length;
     const progress = Storage.getAllProgress();
     const learned = Object.keys(progress).length;
-    let correct = 0;
-    let wrong = 0;
+    const ratings = { again: 0, hard: 0, good: 0, easy: 0 };
 
     Object.values(progress).forEach(p => {
-      correct += p.correct || 0;
-      wrong += p.wrong || 0;
+      if (p.lastRating && ratings[p.lastRating] !== undefined) {
+        ratings[p.lastRating]++;
+      }
     });
 
-    const attempts = correct + wrong;
-    const hitRate = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+    const rated = ratings.again + ratings.hard + ratings.good + ratings.easy;
+    const goodRate = rated > 0 ? Math.round(((ratings.good + ratings.easy) / rated) * 100) : 0;
 
     return {
       total,
       learned,
-      correct,
-      wrong,
       percent: total > 0 ? Math.round((learned / total) * 100) : 0,
-      hitRate
+      ratings,
+      goodRate
     };
   }
 
@@ -80,15 +74,17 @@ const Stats = (() => {
 
       let data = history[dateStr];
       if (dateStr === today.date && today.reviewed > 0) {
-        data = { reviewed: today.reviewed, correct: today.correct, wrong: today.wrong };
+        data = { reviewed: today.reviewed, again: today.again, hard: today.hard, good: today.good, easy: today.easy };
       }
 
       days.push({
         date: dateStr,
         label,
         reviewed: data ? data.reviewed : 0,
-        correct: data ? data.correct : 0,
-        wrong: data ? data.wrong : 0
+        again: data ? (data.again || 0) : 0,
+        hard: data ? (data.hard || 0) : 0,
+        good: data ? (data.good || 0) : 0,
+        easy: data ? (data.easy || 0) : 0
       });
     }
     return days;
@@ -115,7 +111,7 @@ const Stats = (() => {
       const dateStr = d.toISOString().slice(0, 10);
       let data = history[dateStr];
       if (dateStr === today.date && today.reviewed > 0) {
-        data = { reviewed: today.reviewed, correct: today.correct, wrong: today.wrong };
+        data = { reviewed: today.reviewed };
       }
       cells.push({
         date: dateStr,

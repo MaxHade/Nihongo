@@ -6,18 +6,22 @@ const App = (() => {
       emoji: 'あ', name: 'Hiragana',
       subs: {
         gojuuon: 'Grundzeichen', dakuten: 'Dakuten', combo: 'Kombinationen',
-        gojuuon_rev: 'Grundzeichen (Bonus)', dakuten_rev: 'Dakuten (Bonus)', combo_rev: 'Kombinationen (Bonus)'
+        all: 'Alles',
+        gojuuon_rev: 'Grundzeichen (Rückwärts)', dakuten_rev: 'Dakuten (Rückwärts)', combo_rev: 'Kombinationen (Rückwärts)',
+        all_rev: 'Alles (Rückwärts)'
       }
     },
     katakana: {
       emoji: 'ア', name: 'Katakana',
       subs: {
         gojuuon: 'Grundzeichen', dakuten: 'Dakuten', combo: 'Kombinationen',
-        gojuuon_rev: 'Grundzeichen (Bonus)', dakuten_rev: 'Dakuten (Bonus)', combo_rev: 'Kombinationen (Bonus)'
+        all: 'Alles',
+        gojuuon_rev: 'Grundzeichen (Rückwärts)', dakuten_rev: 'Dakuten (Rückwärts)', combo_rev: 'Kombinationen (Rückwärts)',
+        all_rev: 'Alles (Rückwärts)'
       }
     },
     dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke' } },
-    times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten' } },
+    times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben' } },
     particles:   { emoji: '🔗', name: 'Partikeln', subs: { particles: 'Alle Partikeln' } },
@@ -33,8 +37,7 @@ const App = (() => {
   // Session state
   let currentCards = [];
   let currentCardIndex = 0;
-  let sessionCorrect = 0;
-  let sessionWrong = 0;
+  let sessionRatings = { again: 0, hard: 0, good: 0, easy: 0 };
   let currentCategory = null;
   let currentSub = null;
   let previousStreak = 0;
@@ -240,6 +243,25 @@ const App = (() => {
     view.querySelector('.back-btn').onclick = () => navigate('#dashboard');
 
     for (const [sub, subName] of Object.entries(meta.subs)) {
+      // Special handling for random_time
+      if (sub === 'random_time') {
+        const el = document.createElement('div');
+        el.className = 'subcategory-card';
+        el.innerHTML = `
+          <div class="category-name">${subName}</div>
+          <div class="category-count">10 zufällige Uhrzeiten</div>
+          <div class="sub-actions">
+            <button class="sub-action-btn" data-action="learn">Üben</button>
+          </div>
+        `;
+        el.querySelector('[data-action="learn"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigate(`#learn/${category}/${sub}`);
+        });
+        grid.appendChild(el);
+        continue;
+      }
+
       const cards = Flashcard.getCardsBySubcategory(category, sub);
       if (cards.length === 0) continue; // Skip empty subcategories
 
@@ -252,7 +274,7 @@ const App = (() => {
         <div class="category-count">${cards.length} Karten · ${dueCards.length} fällig</div>
         <div class="sub-actions">
           <button class="sub-action-btn" data-action="learn">Lernen</button>
-          <button class="sub-action-btn" data-action="errors">Nur Fehler</button>
+          <button class="sub-action-btn" data-action="errors">Nur Nochmal</button>
           <button class="sub-action-btn" data-action="list">Liste</button>
         </div>
       `;
@@ -274,6 +296,37 @@ const App = (() => {
     }
   }
 
+  // ===== Random Time Generation =====
+  function generateRandomTimeCards(count) {
+    count = count || 10;
+    const hours = (typeof DATA_TIMES !== 'undefined' ? DATA_TIMES : []).filter(c => c.sub === 'hours' && c.id !== 'time_13');
+    const minutes = (typeof DATA_TIMES !== 'undefined' ? DATA_TIMES : []).filter(c => c.sub === 'minutes' && c.id !== 'time_33' && c.id !== 'time_34');
+
+    if (hours.length === 0 || minutes.length === 0) return [];
+
+    const cards = [];
+    for (let i = 0; i < count; i++) {
+      const h = hours[Math.floor(Math.random() * hours.length)];
+      const m = minutes[Math.floor(Math.random() * minutes.length)];
+
+      // Extract numeric hour from back (e.g. "3 Uhr" → 3)
+      const hourNum = parseInt(h.back);
+      // Extract numeric minutes from back (e.g. "25 Minuten" → 25)
+      const minNum = parseInt(m.back);
+
+      cards.push({
+        id: `random_time_${i}`,
+        front: `${h.front} ${m.front}`,
+        back: `${hourNum}:${String(minNum).padStart(2, '0')}`,
+        romaji: `${h.romaji} ${m.romaji}`,
+        category: 'times',
+        sub: 'random_time',
+        isGenerated: true
+      });
+    }
+    return cards;
+  }
+
   // ===== Flashcard Learning =====
   function startLearning(category, sub, errorsOnly) {
     const view = document.getElementById('view-flashcard');
@@ -289,7 +342,7 @@ const App = (() => {
     // Back button
     document.getElementById('flashcard-back').onclick = () => {
       const nonEmptySubs = Object.keys(CATEGORY_META[category]?.subs || {}).filter(s =>
-        Flashcard.getCardsBySubcategory(category, s).length > 0
+        Flashcard.getCardsBySubcategory(category, s).length > 0 || s === 'random_time'
       );
       if (nonEmptySubs.length <= 1) {
         navigate('#dashboard');
@@ -300,29 +353,38 @@ const App = (() => {
 
     // Error mode toggle
     const errorToggle = document.getElementById('error-mode-toggle');
-    errorToggle.checked = !!errorsOnly;
+
+    // Special handling for random_time
+    if (sub === 'random_time') {
+      currentCards = generateRandomTimeCards(10);
+      errorToggle.checked = false;
+      errorToggle.disabled = true;
+    } else {
+      errorToggle.disabled = false;
+      errorToggle.checked = !!errorsOnly;
+
+      // Load cards
+      if (errorsOnly) {
+        currentCards = Flashcard.getNochmalCards(category, sub);
+      } else {
+        currentCards = Flashcard.getDueCards(category, sub);
+      }
+
+      // If no due cards, show all cards (shuffled)
+      if (currentCards.length === 0 && !errorsOnly) {
+        currentCards = Flashcard.shuffle(
+          sub ? Flashcard.getCardsBySubcategory(category, sub) : Flashcard.getCardsByCategory(category)
+        );
+      }
+    }
+
     errorToggle.onchange = () => {
       const mode = errorToggle.checked ? '/errors' : '';
       navigate(`#learn/${category}/${sub}${mode}`);
     };
 
-    // Load cards
-    if (errorsOnly) {
-      currentCards = Flashcard.getErrorCards(category, sub);
-    } else {
-      currentCards = Flashcard.getDueCards(category, sub);
-    }
-
-    // If no due cards, show all cards (shuffled)
-    if (currentCards.length === 0 && !errorsOnly) {
-      currentCards = Flashcard.shuffle(
-        sub ? Flashcard.getCardsBySubcategory(category, sub) : Flashcard.getCardsByCategory(category)
-      );
-    }
-
     currentCardIndex = 0;
-    sessionCorrect = 0;
-    sessionWrong = 0;
+    sessionRatings = { again: 0, hard: 0, good: 0, easy: 0 };
 
     document.getElementById('session-summary').classList.add('hidden');
     document.getElementById('flashcard-container').classList.remove('hidden');
@@ -369,7 +431,7 @@ const App = (() => {
     document.getElementById('answer-result').className = 'answer-result hidden';
     document.getElementById('rating-buttons').classList.add('hidden');
 
-    if (isRevealCard(card)) {
+    if (isRevealCard(card) || card.isGenerated) {
       // Reveal mode: hide input, show reveal button
       form.classList.add('hidden');
       revealBtn.classList.remove('hidden');
@@ -398,18 +460,6 @@ const App = (() => {
 
     // Leeres Feld = Antwort zeigen (als falsch werten)
     const isCorrect = userAnswer ? Flashcard.checkAnswer(userAnswer, card.back) : false;
-
-    // Record answer
-    Flashcard.recordAnswer(card.id, isCorrect);
-
-    if (isCorrect) {
-      sessionCorrect++;
-    } else {
-      sessionWrong++;
-    }
-
-    // Check for daily goal trigger
-    checkDailyGoalTrigger();
 
     // Update UI
     const flashcard = document.getElementById('flashcard');
@@ -458,20 +508,16 @@ const App = (() => {
   function rateAndNext(rating) {
     const card = currentCards[currentCardIndex];
 
-    // For reveal cards, record based on rating
-    if (isRevealCard(card)) {
-      const selfCorrect = (rating === 'good' || rating === 'easy');
-      Flashcard.recordAnswer(card.id, selfCorrect);
-      if (selfCorrect) {
-        sessionCorrect++;
-      } else {
-        sessionWrong++;
-      }
-      // Check for daily goal trigger
-      checkDailyGoalTrigger();
+    // Don't persist generated cards (random time)
+    if (!card.isGenerated) {
+      Flashcard.rateCard(card.id, rating);
     }
 
-    Flashcard.rateCard(card.id, rating);
+    sessionRatings[rating]++;
+
+    // Check for daily goal trigger
+    checkDailyGoalTrigger();
+
     currentCardIndex++;
     showCurrentCard();
   }
@@ -490,18 +536,20 @@ const App = (() => {
     const summary = document.getElementById('session-summary');
     summary.classList.remove('hidden');
 
-    const total = sessionCorrect + sessionWrong;
-    const percent = total > 0 ? Math.round((sessionCorrect / total) * 100) : 0;
+    const total = sessionRatings.again + sessionRatings.hard + sessionRatings.good + sessionRatings.easy;
+    const goodPercent = total > 0 ? Math.round(((sessionRatings.good + sessionRatings.easy) / total) * 100) : 0;
 
     document.getElementById('summary-stats').innerHTML = `
       <div>Karten: <strong>${total}</strong></div>
-      <div class="summary-correct">Richtig: ${sessionCorrect}</div>
-      <div class="summary-wrong">Falsch: ${sessionWrong}</div>
-      <div>Quote: <strong>${percent}%</strong></div>
+      <div class="summary-easy">Einfach: ${sessionRatings.easy}</div>
+      <div class="summary-good">Gut: ${sessionRatings.good}</div>
+      <div class="summary-hard">Schwer: ${sessionRatings.hard}</div>
+      <div class="summary-again">Nochmal: ${sessionRatings.again}</div>
+      <div>Gut/Einfach-Quote: <strong>${goodPercent}%</strong></div>
     `;
 
-    // Confetti for >=80% and at least some cards
-    if (percent >= 80 && total > 0) {
+    // Confetti for >=80% good+easy and at least some cards
+    if (goodPercent >= 80 && total > 0) {
       triggerConfetti();
     }
 
@@ -524,7 +572,7 @@ const App = (() => {
 
     document.getElementById('summary-back').onclick = () => {
       const nonEmptySubs = Object.keys(CATEGORY_META[currentCategory]?.subs || {}).filter(s =>
-        Flashcard.getCardsBySubcategory(currentCategory, s).length > 0
+        Flashcard.getCardsBySubcategory(currentCategory, s).length > 0 || s === 'random_time'
       );
       if (nonEmptySubs.length <= 1) {
         navigate('#dashboard');
@@ -599,7 +647,8 @@ const App = (() => {
       el.addEventListener('click', () => {
         // Only show non-reverse, non-empty subs for lists
         const listSubs = Object.keys(meta.subs).filter(s =>
-          !s.endsWith('_rev') && Flashcard.getCardsBySubcategory(cat, s).length > 0
+          !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' &&
+          Flashcard.getCardsBySubcategory(cat, s).length > 0
         );
         if (listSubs.length <= 1) {
           navigate(`#list/${cat}/${listSubs[0] || ''}`);
@@ -624,8 +673,8 @@ const App = (() => {
     view.querySelector('.back-btn').onclick = () => navigate('#list-overview');
 
     for (const [sub, subName] of Object.entries(meta.subs)) {
-      // Skip reverse subs and empty subs in list view
-      if (sub.endsWith('_rev')) continue;
+      // Skip reverse/virtual subs and empty subs in list view
+      if (sub.endsWith('_rev') || sub === 'all' || sub === 'all_rev' || sub === 'random_time') continue;
       const cards = Flashcard.getCardsBySubcategory(category, sub);
       if (cards.length === 0) continue;
 
@@ -651,7 +700,8 @@ const App = (() => {
 
     document.getElementById('list-back').onclick = () => {
       const listSubs = Object.keys(meta?.subs || {}).filter(s =>
-        !s.endsWith('_rev') && Flashcard.getCardsBySubcategory(category, s).length > 0
+        !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' &&
+        Flashcard.getCardsBySubcategory(category, s).length > 0
       );
       if (listSubs.length <= 1) {
         navigate('#list-overview');
@@ -749,25 +799,34 @@ const App = (() => {
     view.classList.add('active');
 
     const today = Stats.getTodayStats();
-    const todayPercent = today.reviewed > 0
-      ? Math.round((today.correct / today.reviewed) * 100) : 0;
+    const todayTotal = today.reviewed;
+    const todayGoodRate = todayTotal > 0
+      ? Math.round(((today.good + today.easy) / todayTotal) * 100) : 0;
 
     document.getElementById('stats-today-content').innerHTML = `
       <div class="stat-row">
         <span class="stat-label">Gelernte Karten</span>
-        <span class="stat-value">${today.reviewed}</span>
+        <span class="stat-value">${todayTotal}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Richtig</span>
-        <span class="stat-value" style="color:var(--success)">${today.correct}</span>
+        <span class="stat-label">Einfach</span>
+        <span class="stat-value" style="color:var(--accent)">${today.easy || 0}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Falsch</span>
-        <span class="stat-value" style="color:var(--danger)">${today.wrong}</span>
+        <span class="stat-label">Gut</span>
+        <span class="stat-value" style="color:var(--success)">${today.good || 0}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Trefferquote</span>
-        <span class="stat-value">${todayPercent}%</span>
+        <span class="stat-label">Schwer</span>
+        <span class="stat-value" style="color:var(--warning)">${today.hard || 0}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Nochmal</span>
+        <span class="stat-value" style="color:var(--danger)">${today.again || 0}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Gut/Einfach-Quote</span>
+        <span class="stat-value">${todayGoodRate}%</span>
       </div>
     `;
 
@@ -791,8 +850,8 @@ const App = (() => {
         <div class="stat-bar-fill" style="width:${overall.percent}%"></div>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Gesamte Trefferquote</span>
-        <span class="stat-value">${overall.hitRate}%</span>
+        <span class="stat-label">Gut/Einfach-Quote</span>
+        <span class="stat-value">${overall.goodRate}%</span>
       </div>
     `;
 
@@ -802,10 +861,12 @@ const App = (() => {
       if (cards.length === 0) continue;
 
       const s = Stats.getCategoryStats(cat);
+      const rated = s.ratings.again + s.ratings.hard + s.ratings.good + s.ratings.easy;
+      const goodRate = rated > 0 ? Math.round(((s.ratings.good + s.ratings.easy) / rated) * 100) : 0;
       catHtml += `
         <div class="stat-row">
           <span class="stat-label">${meta.emoji} ${meta.name}</span>
-          <span class="stat-value">${s.learned}/${s.total} (${s.hitRate}%)</span>
+          <span class="stat-value">${s.learned}/${s.total} (${goodRate}%)</span>
         </div>
         <div class="stat-bar">
           <div class="stat-bar-fill" style="width:${s.percent}%"></div>
@@ -813,9 +874,6 @@ const App = (() => {
       `;
     }
     document.getElementById('stats-categories-content').innerHTML = catHtml;
-
-    // Reminders toggle
-    setupRemindersToggle();
   }
 
   // ===== Week Chart =====
@@ -828,14 +886,18 @@ const App = (() => {
 
     let html = '<div class="week-chart">';
     days.forEach(day => {
-      const correctWidth = (day.correct / maxReviewed) * 100;
-      const wrongWidth = (day.wrong / maxReviewed) * 100;
+      const easyWidth = (day.easy / maxReviewed) * 100;
+      const goodWidth = (day.good / maxReviewed) * 100;
+      const hardWidth = (day.hard / maxReviewed) * 100;
+      const againWidth = (day.again / maxReviewed) * 100;
       html += `
         <div class="week-chart-row">
           <span class="week-chart-label">${day.label}</span>
           <div class="week-chart-bar-container">
-            <div class="week-chart-bar-correct" style="width: ${correctWidth}%"></div>
-            <div class="week-chart-bar-wrong" style="width: ${wrongWidth}%"></div>
+            <div class="week-chart-bar-easy" style="width: ${easyWidth}%"></div>
+            <div class="week-chart-bar-good" style="width: ${goodWidth}%"></div>
+            <div class="week-chart-bar-hard" style="width: ${hardWidth}%"></div>
+            <div class="week-chart-bar-again" style="width: ${againWidth}%"></div>
           </div>
           <span class="week-chart-count">${day.reviewed}</span>
         </div>
@@ -870,7 +932,7 @@ const App = (() => {
 
     // Build month labels
     const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-    const dayLabels = ['', 'Mo', '', 'Mi', '', 'Fr', ''];
+    const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
     // Calculate weeks for month label placement
     const weeks = [];
@@ -883,12 +945,18 @@ const App = (() => {
       }
     });
 
-    // Month labels
+    // Month labels with separator gaps
     let monthHtml = '<div class="heatmap-months">';
     let lastMonth = -1;
-    weeks.forEach(week => {
+    weeks.forEach((week, weekIdx) => {
       const firstDay = new Date(week[0].date);
       const month = firstDay.getMonth();
+
+      // Insert separator label when new month starts (not on first week)
+      if (month !== lastMonth && lastMonth !== -1) {
+        monthHtml += '<span class="heatmap-month-label heatmap-separator-label"></span>';
+      }
+
       if (month !== lastMonth) {
         monthHtml += `<span class="heatmap-month-label">${monthNames[month]}</span>`;
         lastMonth = month;
@@ -906,8 +974,20 @@ const App = (() => {
       gridHtml += `<div class="heatmap-day-label">${label}</div>`;
     });
 
-    // Data columns (each week)
-    weeks.forEach(week => {
+    // Data columns (each week) with month separators
+    let prevMonth = -1;
+    weeks.forEach((week, weekIdx) => {
+      const firstDay = new Date(week[0].date);
+      const month = firstDay.getMonth();
+
+      // Insert separator column when new month starts (not on first week)
+      if (month !== prevMonth && prevMonth !== -1) {
+        for (let i = 0; i < 7; i++) {
+          gridHtml += '<div class="heatmap-separator"></div>';
+        }
+      }
+      prevMonth = month;
+
       // Pad incomplete weeks
       while (week.length < 7) {
         week.push({ date: '', reviewed: 0, dayOfWeek: week.length });
@@ -941,48 +1021,6 @@ const App = (() => {
       </div>
       ${legendHtml}
     `;
-  }
-
-  // ===== Reminders =====
-  function setupRemindersToggle() {
-    const toggle = document.getElementById('reminders-toggle');
-    if (!toggle) return;
-
-    toggle.checked = Storage.getRemindersEnabled();
-
-    toggle.onchange = () => {
-      if (toggle.checked) {
-        // Request notification permission
-        if ('Notification' in window) {
-          Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-              Storage.setRemindersEnabled(true);
-            } else {
-              toggle.checked = false;
-              Storage.setRemindersEnabled(false);
-            }
-          });
-        } else {
-          toggle.checked = false;
-        }
-      } else {
-        Storage.setRemindersEnabled(false);
-      }
-    };
-  }
-
-  function checkLearningReminder() {
-    if (!Storage.getRemindersEnabled()) return;
-    if (!('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-
-    const session = Storage.getTodaySession();
-    if (session.reviewed === 0) {
-      new Notification('にほんご', {
-        body: 'Zeit zum Lernen! 📚 Du hast heute noch nicht geübt.',
-        icon: 'icons/icon-192.png'
-      });
-    }
   }
 
   // ===== Export/Import =====
@@ -1068,9 +1106,6 @@ const App = (() => {
 
     // Initialize today's session (triggers history save on day change)
     Storage.getTodaySession();
-
-    // Check learning reminder on app start
-    setTimeout(checkLearningReminder, 2000);
   }
 
   if (document.readyState === 'loading') {

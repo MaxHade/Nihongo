@@ -4,7 +4,64 @@ const Storage = (() => {
   const SESSION_KEY = 'nihongo_session';
   const HISTORY_KEY = 'nihongo_history';
   const DAILY_GOAL_KEY = 'nihongo_daily_goal';
-  const REMINDERS_KEY = 'nihongo_reminders';
+  const VERSION_KEY = 'nihongo_data_version';
+  const CURRENT_VERSION = 2;
+
+  // ===== Migration =====
+  function _migrate() {
+    const version = parseInt(localStorage.getItem(VERSION_KEY)) || 0;
+    if (version >= CURRENT_VERSION) return;
+
+    // Migrate card progress: add lastRating
+    const progress = _getAll();
+    let changed = false;
+    for (const id of Object.keys(progress)) {
+      if (!('lastRating' in progress[id])) {
+        progress[id].lastRating = null;
+        changed = true;
+      }
+    }
+    if (changed) _saveAll(progress);
+
+    // Migrate session: correct/wrong → again/hard/good/easy
+    try {
+      const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+      if (session && ('correct' in session || 'wrong' in session)) {
+        const migrated = {
+          date: session.date,
+          reviewed: session.reviewed || 0,
+          again: 0,
+          hard: 0,
+          good: session.correct || 0,
+          easy: 0
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(migrated));
+      }
+    } catch {}
+
+    // Migrate history: correct/wrong → again/hard/good/easy
+    const history = _getHistory();
+    let historyChanged = false;
+    for (const date of Object.keys(history)) {
+      const entry = history[date];
+      if ('correct' in entry || 'wrong' in entry) {
+        history[date] = {
+          reviewed: entry.reviewed || 0,
+          again: 0,
+          hard: 0,
+          good: entry.correct || 0,
+          easy: 0
+        };
+        historyChanged = true;
+      }
+    }
+    if (historyChanged) _saveHistory(history);
+
+    // Remove old reminders key
+    localStorage.removeItem('nihongo_reminders');
+
+    localStorage.setItem(VERSION_KEY, String(CURRENT_VERSION));
+  }
 
   function _getAll() {
     try {
@@ -51,8 +108,10 @@ const Storage = (() => {
     const history = _getHistory();
     history[session.date] = {
       reviewed: session.reviewed,
-      correct: session.correct,
-      wrong: session.wrong
+      again: session.again || 0,
+      hard: session.hard || 0,
+      good: session.good || 0,
+      easy: session.easy || 0
     };
     _saveHistory(history);
   }
@@ -71,21 +130,19 @@ const Storage = (() => {
         if (session.date && session.reviewed > 0) {
           saveDayToHistory(session);
         }
-        return { date: today, correct: 0, wrong: 0, reviewed: 0 };
+        return { date: today, reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
       }
       return session;
     } catch {
-      return { date: today, correct: 0, wrong: 0, reviewed: 0 };
+      return { date: today, reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
     }
   }
 
-  function updateTodaySession(correct) {
+  function updateTodaySession(rating) {
     const session = getTodaySession();
     session.reviewed++;
-    if (correct) {
-      session.correct++;
-    } else {
-      session.wrong++;
+    if (session[rating] !== undefined) {
+      session[rating]++;
     }
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     // Also keep history in sync for today
@@ -141,15 +198,6 @@ const Storage = (() => {
     localStorage.setItem(DAILY_GOAL_KEY, String(Math.max(1, Math.round(n))));
   }
 
-  // ===== Reminders =====
-  function getRemindersEnabled() {
-    return localStorage.getItem(REMINDERS_KEY) === 'true';
-  }
-
-  function setRemindersEnabled(enabled) {
-    localStorage.setItem(REMINDERS_KEY, String(!!enabled));
-  }
-
   // ===== Export/Import =====
   function exportData() {
     return JSON.stringify({
@@ -176,6 +224,8 @@ const Storage = (() => {
       if (data.dailyGoal) {
         setDailyGoal(data.dailyGoal);
       }
+      // Re-run migration after import
+      _migrate();
       return true;
     } catch {
       return false;
@@ -189,6 +239,9 @@ const Storage = (() => {
     localStorage.removeItem(DAILY_GOAL_KEY);
   }
 
+  // Run migration on load
+  _migrate();
+
   return {
     getProgress,
     setProgress,
@@ -199,8 +252,6 @@ const Storage = (() => {
     getStreak,
     getDailyGoal,
     setDailyGoal,
-    getRemindersEnabled,
-    setRemindersEnabled,
     exportData,
     importData,
     clearAll

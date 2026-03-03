@@ -36,6 +36,13 @@ const Flashcard = (() => {
   }
 
   function getCardsBySubcategory(category, sub) {
+    // Virtual subcategories for hiragana/katakana
+    if ((category === 'hiragana' || category === 'katakana') && sub === 'all') {
+      return getAllCards().filter(c => c.category === category && ['gojuuon', 'dakuten', 'combo'].includes(c.sub));
+    }
+    if ((category === 'hiragana' || category === 'katakana') && sub === 'all_rev') {
+      return getAllCards().filter(c => c.category === category && ['gojuuon_rev', 'dakuten_rev', 'combo_rev'].includes(c.sub));
+    }
     return getAllCards().filter(c => c.category === category && c.sub === sub);
   }
 
@@ -49,44 +56,27 @@ const Flashcard = (() => {
     }));
   }
 
-  function getErrorCards(category, sub) {
+  function getNochmalCards(category, sub) {
     let cards = sub ? getCardsBySubcategory(category, sub) : getCardsByCategory(category);
     return shuffle(cards.filter(card => {
       const progress = Storage.getProgress(card.id);
-      return progress && progress.wrong > 0;
+      return progress && progress.lastRating === 'again';
     }));
   }
 
   function rateCard(cardId, rating) {
     const interval = INTERVALS[rating];
     const now = Date.now();
-    const existing = Storage.getProgress(cardId) || { correct: 0, wrong: 0 };
+    const existing = Storage.getProgress(cardId) || {};
 
     Storage.setProgress(cardId, {
       nextReview: now + interval,
       interval: interval,
-      correct: existing.correct,
-      wrong: existing.wrong,
+      lastRating: rating,
       lastReview: now
     });
-  }
 
-  function recordAnswer(cardId, isCorrect) {
-    const existing = Storage.getProgress(cardId) || {
-      nextReview: 0,
-      interval: 0,
-      correct: 0,
-      wrong: 0
-    };
-
-    if (isCorrect) {
-      existing.correct++;
-    } else {
-      existing.wrong++;
-    }
-
-    Storage.setProgress(cardId, existing);
-    Storage.updateTodaySession(isCorrect);
+    Storage.updateTodaySession(rating);
   }
 
   function checkAnswer(input, expected) {
@@ -124,9 +114,8 @@ const Flashcard = (() => {
     getCardsByCategory,
     getCardsBySubcategory,
     getDueCards,
-    getErrorCards,
+    getNochmalCards,
     rateCard,
-    recordAnswer,
     checkAnswer,
     getCategories,
     getCategoryCards,
