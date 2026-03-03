@@ -109,7 +109,11 @@ const App = (() => {
         setNavActive('list-overview');
         break;
       case 'list':
-        showList(parts[1], parts[2]);
+        if (parts[1] === '_difficult') {
+          showDifficultList();
+        } else {
+          showList(parts[1], parts[2]);
+        }
         setNavActive('list-overview');
         break;
       case 'stats':
@@ -144,6 +148,21 @@ const App = (() => {
       ? `🔥 ${streak} Tag${streak !== 1 ? 'e' : ''} Streak`
       : 'Starte deine Serie!';
 
+    // Mini week dots
+    const last7 = Stats.getLast7Days();
+    const weekDayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    let miniWeekHtml = '<div class="mini-week">';
+    last7.forEach(day => {
+      const isActive = day.reviewed > 0;
+      miniWeekHtml += `
+        <div class="mini-week-day">
+          <span class="mini-week-label">${day.label}</span>
+          <div class="mini-week-dot${isActive ? ' active' : ''}"></div>
+        </div>
+      `;
+    });
+    miniWeekHtml += '</div>';
+
     header.innerHTML = `
       <div class="dashboard-header-top">
         <span class="streak-display">${streakText}</span>
@@ -156,6 +175,7 @@ const App = (() => {
         <div class="daily-progress-fill${isComplete ? ' complete' : ''}" style="width: ${percent}%"></div>
       </div>
       <div class="daily-progress-text">${percent}%</div>
+      ${miniWeekHtml}
     `;
 
     document.getElementById('goal-settings-btn').addEventListener('click', (e) => {
@@ -179,8 +199,25 @@ const App = (() => {
 
     renderDashboardHeader();
 
+    // Remove old daily challenge card if exists
+    const oldDaily = document.querySelector('.daily-challenge-card');
+    if (oldDaily) oldDaily.remove();
+
+    // Daily challenge card
+    const dailyCard = document.createElement('div');
+    dailyCard.className = 'daily-challenge-card';
+    dailyCard.innerHTML = `
+      <span class="daily-challenge-emoji">🎯</span>
+      <div class="daily-challenge-text">
+        <span class="daily-challenge-title">Tägliche Herausforderung</span>
+        <span class="daily-challenge-sub">15 zufällige Karten aus allen Kategorien</span>
+      </div>
+    `;
+    dailyCard.addEventListener('click', () => navigate('#learn/_daily/all'));
+
     const grid = document.getElementById('category-grid');
     grid.innerHTML = '';
+    grid.parentNode.insertBefore(dailyCard, grid);
 
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
       const cards = Flashcard.getCardsByCategory(cat);
@@ -341,6 +378,10 @@ const App = (() => {
 
     // Back button
     document.getElementById('flashcard-back').onclick = () => {
+      if (category === '_daily') {
+        navigate('#dashboard');
+        return;
+      }
       const nonEmptySubs = Object.keys(CATEGORY_META[category]?.subs || {}).filter(s =>
         Flashcard.getCardsBySubcategory(category, s).length > 0 || s === 'random_time'
       );
@@ -354,8 +395,27 @@ const App = (() => {
     // Error mode toggle
     const errorToggle = document.getElementById('error-mode-toggle');
 
+    // Special handling for daily challenge
+    if (category === '_daily') {
+      errorToggle.checked = false;
+      errorToggle.disabled = true;
+
+      // Collect 15 cards: prefer due cards, fill with random
+      const allCards = Flashcard.getAllCards().filter(c => !c.id.includes('_rev_'));
+      const now = Date.now();
+      const dueCards = Flashcard.shuffle(allCards.filter(card => {
+        const progress = Storage.getProgress(card.id);
+        if (!progress) return true;
+        return progress.nextReview <= now;
+      }));
+      const nonDueCards = Flashcard.shuffle(allCards.filter(card => {
+        const progress = Storage.getProgress(card.id);
+        return progress && progress.nextReview > now;
+      }));
+      currentCards = dueCards.concat(nonDueCards).slice(0, 15);
+    }
     // Special handling for random_time
-    if (sub === 'random_time') {
+    else if (sub === 'random_time') {
       currentCards = generateRandomTimeCards(10);
       errorToggle.checked = false;
       errorToggle.disabled = true;
@@ -379,6 +439,7 @@ const App = (() => {
     }
 
     errorToggle.onchange = () => {
+      if (category === '_daily') return;
       const mode = errorToggle.checked ? '/errors' : '';
       navigate(`#learn/${category}/${sub}${mode}`);
     };
@@ -463,6 +524,8 @@ const App = (() => {
 
     // Update UI
     const flashcard = document.getElementById('flashcard');
+    flashcard.classList.add('flipping');
+    setTimeout(() => flashcard.classList.remove('flipping'), 400);
     flashcard.classList.add(isCorrect ? 'correct' : 'wrong');
 
     const result = document.getElementById('answer-result');
@@ -492,6 +555,11 @@ const App = (() => {
 
   function revealCurrentCard() {
     const card = currentCards[currentCardIndex];
+
+    // Flip animation
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.add('flipping');
+    setTimeout(() => flashcard.classList.remove('flipping'), 400);
 
     // Hide reveal button
     document.getElementById('reveal-btn').classList.add('hidden');
@@ -566,11 +634,19 @@ const App = (() => {
     }
 
     document.getElementById('summary-restart').onclick = () => {
+      if (currentCategory === '_daily') {
+        navigate('#learn/_daily/all');
+        return;
+      }
       const mode = document.getElementById('error-mode-toggle').checked ? '/errors' : '';
       navigate(`#learn/${currentCategory}/${currentSub}${mode}`);
     };
 
     document.getElementById('summary-back').onclick = () => {
+      if (currentCategory === '_daily') {
+        navigate('#dashboard');
+        return;
+      }
       const nonEmptySubs = Object.keys(CATEGORY_META[currentCategory]?.subs || {}).filter(s =>
         Flashcard.getCardsBySubcategory(currentCategory, s).length > 0 || s === 'random_time'
       );
@@ -624,11 +700,28 @@ const App = (() => {
     const grid = document.getElementById('category-grid');
     grid.innerHTML = '';
 
-    // Hide dashboard header in list overview mode
+    // Hide dashboard header and daily challenge in list overview mode
     const header = document.getElementById('dashboard-header');
     if (header) header.innerHTML = '';
+    const oldDailyInList = document.querySelector('.daily-challenge-card');
+    if (oldDailyInList) oldDailyInList.remove();
 
     document.querySelector('#view-dashboard h2').textContent = 'Listen';
+
+    // Difficult cards virtual entry
+    const difficultCards = getDifficultCards();
+    if (difficultCards.length > 0) {
+      const el = document.createElement('div');
+      el.className = 'category-card';
+      el.style.borderColor = 'var(--danger)';
+      el.innerHTML = `
+        <span class="category-emoji">🔴</span>
+        <div class="category-name">Schwierigste Karten</div>
+        <div class="category-count">${difficultCards.length} Einträge</div>
+      `;
+      el.addEventListener('click', () => navigate('#list/_difficult'));
+      grid.appendChild(el);
+    }
 
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
       const cards = Flashcard.getCardsByCategory(cat);
@@ -687,6 +780,71 @@ const App = (() => {
       el.addEventListener('click', () => navigate(`#list/${category}/${sub}`));
       grid.appendChild(el);
     }
+  }
+
+  // ===== Difficult Cards List =====
+  function getDifficultCards() {
+    const allCards = Flashcard.getAllCards();
+    return allCards.filter(card => {
+      const p = Storage.getProgress(card.id);
+      return p && p.lastRating === 'again';
+    });
+  }
+
+  function showDifficultList() {
+    const view = document.getElementById('view-list');
+    view.classList.add('active');
+
+    document.getElementById('list-title').textContent = 'Schwierigste Karten';
+    document.getElementById('list-back').onclick = () => navigate('#list-overview');
+
+    const cards = getDifficultCards();
+    const search = document.getElementById('list-search');
+    search.value = '';
+
+    function renderList(filter) {
+      let filtered = cards.filter(c => !c.id.includes('_rev_'));
+      if (filter) {
+        const f = filter.toLowerCase();
+        filtered = filtered.filter(c =>
+          c.front.includes(filter) ||
+          c.back.toLowerCase().includes(f) ||
+          (c.romaji && c.romaji.toLowerCase().includes(f)) ||
+          (c.hint && c.hint.toLowerCase().includes(f))
+        );
+      }
+
+      const content = document.getElementById('list-content');
+      let tableHtml = `<table class="list-table"><thead><tr>
+        <th>Japanisch</th><th>Romaji</th><th>Bedeutung</th>
+      </tr></thead><tbody>`;
+      let cardsHtml = '<div class="list-cards">';
+
+      filtered.forEach(card => {
+        const romaji = card.romaji || '';
+        const meaning = card.back || '';
+        const hint = card.hint ? ` (${card.hint})` : '';
+        tableHtml += `<tr>
+          <td class="jp-col">${escapeHtml(card.front)}</td>
+          <td>${escapeHtml(romaji)}</td>
+          <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
+        </tr>`;
+        cardsHtml += `<div class="list-card-item">
+          <div class="list-card-jp">${escapeHtml(card.front)}</div>
+          <div class="list-card-romaji">${escapeHtml(romaji)}</div>
+          <div class="list-card-hint">${escapeHtml(meaning)}${escapeHtml(hint)}</div>
+        </div>`;
+      });
+
+      tableHtml += '</tbody></table>';
+      cardsHtml += '</div>';
+      content.innerHTML = filtered.length > 0
+        ? tableHtml + cardsHtml
+        : '<p style="color:var(--text-secondary);text-align:center;padding:24px;">Keine schwierigen Karten vorhanden.</p>';
+    }
+
+    renderList('');
+    search.oninput = () => renderList(search.value);
   }
 
   // ===== List View =====
@@ -866,10 +1024,14 @@ const App = (() => {
       catHtml += `
         <div class="stat-row">
           <span class="stat-label">${meta.emoji} ${meta.name}</span>
-          <span class="stat-value">${s.learned}/${s.total} (${goodRate}%)</span>
+          <span class="stat-value">${s.learned}/${s.total} gelernt</span>
         </div>
         <div class="stat-bar">
           <div class="stat-bar-fill" style="width:${s.percent}%"></div>
+        </div>
+        <div class="stat-row-sub">
+          <span class="stat-label">Gut/Einfach-Quote</span>
+          <span class="stat-value">${goodRate}%</span>
         </div>
       `;
     }
@@ -1097,6 +1259,34 @@ const App = (() => {
     // Back buttons with data-back
     document.querySelectorAll('[data-back]').forEach(btn => {
       btn.addEventListener('click', () => navigate(`#${btn.dataset.back}`));
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Don't fire when typing in input
+      if (document.activeElement && document.activeElement.id === 'answer-input') return;
+      // Only in flashcard view
+      const flashcardView = document.getElementById('view-flashcard');
+      if (!flashcardView || !flashcardView.classList.contains('active')) return;
+
+      const ratingBtns = document.getElementById('rating-buttons');
+      const revealBtn = document.getElementById('reveal-btn');
+
+      // 1/2/3/4 → rate when rating buttons visible
+      if (ratingBtns && !ratingBtns.classList.contains('hidden')) {
+        if (e.key === '1') { rateAndNext('again'); e.preventDefault(); }
+        else if (e.key === '2') { rateAndNext('hard'); e.preventDefault(); }
+        else if (e.key === '3') { rateAndNext('good'); e.preventDefault(); }
+        else if (e.key === '4') { rateAndNext('easy'); e.preventDefault(); }
+      }
+
+      // Enter/Space → reveal when reveal button visible
+      if (revealBtn && !revealBtn.classList.contains('hidden')) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          revealCurrentCard();
+          e.preventDefault();
+        }
+      }
     });
 
     setupExportImport();
