@@ -37,6 +37,8 @@ const App = (() => {
   let sessionWrong = 0;
   let currentCategory = null;
   let currentSub = null;
+  let previousStreak = 0;
+  let dailyGoalReached = false;
 
   // ===== Card type detection =====
   function isRevealCard(card) {
@@ -123,11 +125,57 @@ const App = (() => {
     });
   }
 
+  // ===== Dashboard Header =====
+  function renderDashboardHeader() {
+    const header = document.getElementById('dashboard-header');
+    if (!header) return;
+
+    const streak = Storage.getStreak();
+    const session = Storage.getTodaySession();
+    const goal = Storage.getDailyGoal();
+    const reviewed = session.reviewed;
+    const percent = Math.min(100, Math.round((reviewed / goal) * 100));
+    const isComplete = reviewed >= goal;
+
+    const streakText = streak > 0
+      ? `🔥 ${streak} Tag${streak !== 1 ? 'e' : ''} Streak`
+      : 'Starte deine Serie!';
+
+    header.innerHTML = `
+      <div class="dashboard-header-top">
+        <span class="streak-display">${streakText}</span>
+        <span class="daily-goal-display">
+          ${reviewed} / ${goal} heute
+          <button class="goal-settings-btn" id="goal-settings-btn" title="Tages-Ziel ändern">⚙️</button>
+        </span>
+      </div>
+      <div class="daily-progress-bar">
+        <div class="daily-progress-fill${isComplete ? ' complete' : ''}" style="width: ${percent}%"></div>
+      </div>
+      <div class="daily-progress-text">${percent}%</div>
+    `;
+
+    document.getElementById('goal-settings-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newGoal = prompt('Tages-Ziel (Anzahl Karten):', goal);
+      if (newGoal !== null) {
+        const n = parseInt(newGoal);
+        if (!isNaN(n) && n > 0) {
+          Storage.setDailyGoal(n);
+          renderDashboardHeader();
+        }
+      }
+    });
+  }
+
   // ===== Dashboard =====
   function showDashboard() {
     const view = document.getElementById('view-dashboard');
     view.classList.add('active');
     document.querySelector('#view-dashboard h2').textContent = 'Kategorien';
+
+    renderDashboardHeader();
+
     const grid = document.getElementById('category-grid');
     grid.innerHTML = '';
 
@@ -233,6 +281,10 @@ const App = (() => {
 
     currentCategory = category;
     currentSub = sub;
+
+    // Capture current streak and goal state before session
+    previousStreak = Storage.getStreak();
+    dailyGoalReached = Storage.getTodaySession().reviewed >= Storage.getDailyGoal();
 
     // Back button
     document.getElementById('flashcard-back').onclick = () => {
@@ -356,6 +408,9 @@ const App = (() => {
       sessionWrong++;
     }
 
+    // Check for daily goal trigger
+    checkDailyGoalTrigger();
+
     // Update UI
     const flashcard = document.getElementById('flashcard');
     flashcard.classList.add(isCorrect ? 'correct' : 'wrong');
@@ -412,11 +467,22 @@ const App = (() => {
       } else {
         sessionWrong++;
       }
+      // Check for daily goal trigger
+      checkDailyGoalTrigger();
     }
 
     Flashcard.rateCard(card.id, rating);
     currentCardIndex++;
     showCurrentCard();
+  }
+
+  function checkDailyGoalTrigger() {
+    const session = Storage.getTodaySession();
+    const goal = Storage.getDailyGoal();
+    if (!dailyGoalReached && session.reviewed >= goal) {
+      dailyGoalReached = true;
+      triggerConfetti();
+    }
   }
 
   function showSessionSummary() {
@@ -433,6 +499,23 @@ const App = (() => {
       <div class="summary-wrong">Falsch: ${sessionWrong}</div>
       <div>Quote: <strong>${percent}%</strong></div>
     `;
+
+    // Confetti for >=80% and at least some cards
+    if (percent >= 80 && total > 0) {
+      triggerConfetti();
+    }
+
+    // Check streak milestone
+    const newStreak = Storage.getStreak();
+    const milestones = [5, 10, 25, 50, 100];
+    if (newStreak > previousStreak) {
+      for (const m of milestones) {
+        if (newStreak >= m && previousStreak < m) {
+          triggerConfetti();
+          break;
+        }
+      }
+    }
 
     document.getElementById('summary-restart').onclick = () => {
       const mode = document.getElementById('error-mode-toggle').checked ? '/errors' : '';
@@ -451,6 +534,40 @@ const App = (() => {
     };
   }
 
+  // ===== Confetti =====
+  function triggerConfetti() {
+    const container = document.getElementById('confetti-container');
+    if (!container) return;
+
+    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#e91e63', '#00bcd4', '#ff9800'];
+    const shapes = ['square', 'circle'];
+
+    for (let i = 0; i < 30; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const left = Math.random() * 100;
+      const delay = Math.random() * 0.8;
+      const size = 6 + Math.random() * 8;
+
+      piece.style.left = left + '%';
+      piece.style.width = size + 'px';
+      piece.style.height = size + 'px';
+      piece.style.background = color;
+      piece.style.borderRadius = shape === 'circle' ? '50%' : '2px';
+      piece.style.animationDelay = delay + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+
+      container.appendChild(piece);
+    }
+
+    // Clean up after animation
+    setTimeout(() => {
+      container.innerHTML = '';
+    }, 4000);
+  }
+
   // ===== List Overview =====
   function showListOverview() {
     const view = document.getElementById('view-dashboard');
@@ -458,6 +575,10 @@ const App = (() => {
 
     const grid = document.getElementById('category-grid');
     grid.innerHTML = '';
+
+    // Hide dashboard header in list overview mode
+    const header = document.getElementById('dashboard-header');
+    if (header) header.innerHTML = '';
 
     document.querySelector('#view-dashboard h2').textContent = 'Listen';
 
@@ -650,6 +771,12 @@ const App = (() => {
       </div>
     `;
 
+    // 7-Day bar chart
+    renderWeekChart();
+
+    // Heatmap
+    renderHeatmap();
+
     const overall = Stats.getOverallStats();
     document.getElementById('stats-overall-content').innerHTML = `
       <div class="stat-row">
@@ -686,6 +813,176 @@ const App = (() => {
       `;
     }
     document.getElementById('stats-categories-content').innerHTML = catHtml;
+
+    // Reminders toggle
+    setupRemindersToggle();
+  }
+
+  // ===== Week Chart =====
+  function renderWeekChart() {
+    const container = document.getElementById('stats-week-chart');
+    if (!container) return;
+
+    const days = Stats.getLast7Days();
+    const maxReviewed = Math.max(...days.map(d => d.reviewed), 1);
+
+    let html = '<div class="week-chart">';
+    days.forEach(day => {
+      const correctWidth = (day.correct / maxReviewed) * 100;
+      const wrongWidth = (day.wrong / maxReviewed) * 100;
+      html += `
+        <div class="week-chart-row">
+          <span class="week-chart-label">${day.label}</span>
+          <div class="week-chart-bar-container">
+            <div class="week-chart-bar-correct" style="width: ${correctWidth}%"></div>
+            <div class="week-chart-bar-wrong" style="width: ${wrongWidth}%"></div>
+          </div>
+          <span class="week-chart-count">${day.reviewed}</span>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // ===== Heatmap =====
+  function renderHeatmap() {
+    const container = document.getElementById('stats-heatmap-content');
+    if (!container) return;
+
+    const cells = Stats.getHeatmapData(90);
+    if (cells.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">Noch keine Daten vorhanden.</p>';
+      return;
+    }
+
+    // Find max for level calculation
+    const maxReviewed = Math.max(...cells.map(c => c.reviewed), 1);
+
+    function getLevel(reviewed) {
+      if (reviewed === 0) return 0;
+      const ratio = reviewed / maxReviewed;
+      if (ratio <= 0.25) return 1;
+      if (ratio <= 0.5) return 2;
+      if (ratio <= 0.75) return 3;
+      return 4;
+    }
+
+    // Build month labels
+    const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const dayLabels = ['', 'Mo', '', 'Mi', '', 'Fr', ''];
+
+    // Calculate weeks for month label placement
+    const weeks = [];
+    let currentWeek = [];
+    cells.forEach((cell, i) => {
+      currentWeek.push(cell);
+      if (currentWeek.length === 7 || i === cells.length - 1) {
+        weeks.push([...currentWeek]);
+        currentWeek = [];
+      }
+    });
+
+    // Month labels
+    let monthHtml = '<div class="heatmap-months">';
+    let lastMonth = -1;
+    weeks.forEach(week => {
+      const firstDay = new Date(week[0].date);
+      const month = firstDay.getMonth();
+      if (month !== lastMonth) {
+        monthHtml += `<span class="heatmap-month-label">${monthNames[month]}</span>`;
+        lastMonth = month;
+      } else {
+        monthHtml += '<span class="heatmap-month-label"></span>';
+      }
+    });
+    monthHtml += '</div>';
+
+    // Grid
+    let gridHtml = '<div class="heatmap-grid">';
+
+    // Day labels column
+    dayLabels.forEach(label => {
+      gridHtml += `<div class="heatmap-day-label">${label}</div>`;
+    });
+
+    // Data columns (each week)
+    weeks.forEach(week => {
+      // Pad incomplete weeks
+      while (week.length < 7) {
+        week.push({ date: '', reviewed: 0, dayOfWeek: week.length });
+      }
+      week.forEach(cell => {
+        const level = cell.date ? getLevel(cell.reviewed) : 0;
+        const title = cell.date ? `${cell.date}: ${cell.reviewed} Karten` : '';
+        gridHtml += `<div class="heatmap-cell level-${level}" title="${title}"></div>`;
+      });
+    });
+
+    gridHtml += '</div>';
+
+    // Legend
+    const legendHtml = `
+      <div class="heatmap-legend">
+        <span>Weniger</span>
+        <div class="heatmap-cell level-0"></div>
+        <div class="heatmap-cell level-1"></div>
+        <div class="heatmap-cell level-2"></div>
+        <div class="heatmap-cell level-3"></div>
+        <div class="heatmap-cell level-4"></div>
+        <span>Mehr</span>
+      </div>
+    `;
+
+    container.innerHTML = `
+      <div class="heatmap-container">
+        ${monthHtml}
+        ${gridHtml}
+      </div>
+      ${legendHtml}
+    `;
+  }
+
+  // ===== Reminders =====
+  function setupRemindersToggle() {
+    const toggle = document.getElementById('reminders-toggle');
+    if (!toggle) return;
+
+    toggle.checked = Storage.getRemindersEnabled();
+
+    toggle.onchange = () => {
+      if (toggle.checked) {
+        // Request notification permission
+        if ('Notification' in window) {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              Storage.setRemindersEnabled(true);
+            } else {
+              toggle.checked = false;
+              Storage.setRemindersEnabled(false);
+            }
+          });
+        } else {
+          toggle.checked = false;
+        }
+      } else {
+        Storage.setRemindersEnabled(false);
+      }
+    };
+  }
+
+  function checkLearningReminder() {
+    if (!Storage.getRemindersEnabled()) return;
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const session = Storage.getTodaySession();
+    if (session.reviewed === 0) {
+      new Notification('にほんご', {
+        body: 'Zeit zum Lernen! 📚 Du hast heute noch nicht geübt.',
+        icon: 'icons/icon-192.png'
+      });
+    }
   }
 
   // ===== Export/Import =====
@@ -768,6 +1065,12 @@ const App = (() => {
 
     window.addEventListener('hashchange', handleRoute);
     handleRoute();
+
+    // Initialize today's session (triggers history save on day change)
+    Storage.getTodaySession();
+
+    // Check learning reminder on app start
+    setTimeout(checkLearningReminder, 2000);
   }
 
   if (document.readyState === 'loading') {

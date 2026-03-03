@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="icon" href="icons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 </head>
 <body>
   <header id="app-header">
@@ -20,6 +20,7 @@
   <main id="app-main">
     <!-- Dashboard View -->
     <section id="view-dashboard" class="view active">
+      <div id="dashboard-header" class="dashboard-header"></div>
       <h2>Kategorien</h2>
       <div id="category-grid" class="category-grid"></div>
     </section>
@@ -85,6 +86,14 @@
         <h3>Heute</h3>
         <div id="stats-today-content"></div>
       </div>
+      <div id="stats-week" class="stats-section">
+        <h3>Letzte 7 Tage</h3>
+        <div id="stats-week-chart"></div>
+      </div>
+      <div id="stats-heatmap" class="stats-section">
+        <h3>Lern-Kalender</h3>
+        <div id="stats-heatmap-content"></div>
+      </div>
       <div id="stats-overall" class="stats-section">
         <h3>Gesamt</h3>
         <div id="stats-overall-content"></div>
@@ -99,6 +108,15 @@
           <button id="export-btn" class="secondary-btn">Daten exportieren</button>
           <button id="import-btn" class="secondary-btn">Daten importieren</button>
           <input type="file" id="import-file" accept=".json" class="hidden">
+        </div>
+      </div>
+      <div class="stats-section">
+        <h3>Erinnerungen</h3>
+        <div id="reminders-section">
+          <label class="reminder-toggle-label">
+            <input type="checkbox" id="reminders-toggle"> Lern-Erinnerungen aktivieren
+          </label>
+          <p class="reminder-hint">Erinnert dich beim App-Start, falls du heute noch nicht gelernt hast.</p>
         </div>
       </div>
     </section>
@@ -118,6 +136,8 @@
       <span class="nav-label">Statistik</span>
     </button>
   </nav>
+
+  <div id="confetti-container"></div>
 
   <!-- Scripts: data first, then modules, then app -->
   <script src="data/hiragana.js"></script>

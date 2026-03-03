@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nihongo-v1';
+const CACHE_VERSION = 'nihongo-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -21,7 +21,7 @@ const ASSETS = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
-  '/icons/favicon.ico'
+  '/icons/favicon-32.png'
 ];
 
 // Install: Cache all app files
