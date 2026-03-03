@@ -148,6 +148,7 @@ const App = (() => {
   function renderDashboardHeader() {
     const header = document.getElementById('dashboard-header');
     if (!header) return;
+    header.style.display = '';
 
     const streak = Storage.getStreak();
     const session = Storage.getTodaySession();
@@ -571,8 +572,9 @@ const App = (() => {
       `;
     }
 
-    // Disable input, show rating buttons
+    // Disable input and remove focus so keyboard shortcuts work
     input.disabled = true;
+    input.blur();
     document.getElementById('check-btn').disabled = true;
     document.getElementById('rating-buttons').classList.remove('hidden');
   }
@@ -786,7 +788,7 @@ const App = (() => {
 
     // Hide dashboard header and daily challenge in list overview mode
     const header = document.getElementById('dashboard-header');
-    if (header) header.innerHTML = '';
+    if (header) { header.innerHTML = ''; header.style.display = 'none'; }
     const oldDailyInList = document.querySelector('.daily-challenge-card');
     if (oldDailyInList) oldDailyInList.remove();
 

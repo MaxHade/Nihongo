@@ -1084,6 +1084,10 @@ body {
   .list-cards {
     display: none;
   }
+
+  .global-search-results .list-cards {
+    display: flex;
+  }
 }
 
 @media (min-width: 768px) {
