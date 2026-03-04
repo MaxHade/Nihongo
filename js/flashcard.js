@@ -26,7 +26,8 @@ const Flashcard = (() => {
       typeof DATA_VOCABULARY !== 'undefined' ? DATA_VOCABULARY : [],
       typeof DATA_PARTICLES !== 'undefined' ? DATA_PARTICLES : [],
       typeof DATA_GREETINGS !== 'undefined' ? DATA_GREETINGS : [],
-      typeof DATA_LESSONS !== 'undefined' ? DATA_LESSONS : []
+      typeof DATA_LESSONS !== 'undefined' ? DATA_LESSONS : [],
+      typeof DATA_KANJI !== 'undefined' ? DATA_KANJI : []
     ];
     return sources.flat();
   }

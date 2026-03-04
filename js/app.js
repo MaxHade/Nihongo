@@ -23,9 +23,9 @@ const App = (() => {
     dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten' } },
     times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', duration: 'Dauer', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
-    vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben' } },
+    vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben', greetings: 'Floskeln', colors: 'Farben', food: 'Essen & Trinken', directions: 'Richtungen', body: 'Körperteile' } },
     particles:   { emoji: '🔗', name: 'Partikeln', subs: { particles: 'Alle Partikeln' } },
-    greetings:   { emoji: '👋', name: 'Begrüßungen', subs: { greetings: 'Alle Floskeln' } },
+    kanji:       { emoji: '漢', name: 'Kanji', subs: { n5: 'JLPT N5' } },
     lessons:     { emoji: '📝', name: 'Lektionen', subs: {
       lesson1: 'Lektion 1', lesson2: 'Lektion 2', lesson3: 'Lektion 3', lesson4: 'Lektion 4', lesson5: 'Lektion 5',
       lesson6: 'Lektion 6', lesson7: 'Lektion 7', lesson8: 'Lektion 8', lesson9: 'Lektion 9', lesson10: 'Lektion 10',

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nihongo-v11';
+const CACHE_VERSION = 'nihongo-v12';
 const ASSETS = [
   '/',
   '/index.html',
@@ -18,6 +18,7 @@ const ASSETS = [
   '/data/particles.js',
   '/data/greetings.js',
   '/data/lessons.js',
+  '/data/kanji.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
