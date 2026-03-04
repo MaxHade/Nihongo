@@ -16,6 +16,7 @@ var DATA_VOCABULARY = [
   {id: "vocab_14", front: "おばあさん", back: "Großmutter", romaji: "obaasan", category: "vocabulary", sub: "family"},
   {id: "vocab_15", front: "かぞく", back: "Familie", romaji: "kazoku", category: "vocabulary", sub: "family"},
   {id: "vocab_16", front: "りょうしん", back: "Eltern", romaji: "ryoushin", category: "vocabulary", sub: "family"},
+  {id: "vocab_137", front: "きょうだい", back: "Geschwister", romaji: "kyoudai", category: "vocabulary", sub: "family"},
 
   // ==================== i_adjectives ====================
   {id: "vocab_17", front: "おおきい", back: "groß", romaji: "ookii", category: "vocabulary", sub: "i_adjectives"},
