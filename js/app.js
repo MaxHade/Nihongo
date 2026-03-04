@@ -901,6 +901,20 @@ const App = (() => {
     });
   }
 
+  function syncRomajiToggle(show) {
+    const view = document.getElementById('view-list');
+    const toggle = document.getElementById('romaji-toggle');
+    const label = document.getElementById('romaji-toggle-label');
+    if (show === false) {
+      label.style.display = 'none';
+      return;
+    }
+    label.style.display = '';
+    const visible = localStorage.getItem('nihongo_romaji_visible') !== 'false';
+    toggle.checked = visible;
+    view.classList.toggle('romaji-hidden', !visible);
+  }
+
   function showDifficultList() {
     const view = document.getElementById('view-list');
     view.classList.add('active');
@@ -926,7 +940,7 @@ const App = (() => {
 
       const content = document.getElementById('list-content');
       let tableHtml = `<table class="list-table"><thead><tr>
-        <th>Japanisch</th><th>Romaji</th><th>Bedeutung</th><th>Status</th>
+        <th>Japanisch</th><th class="romaji-col">Romaji</th><th>Bedeutung</th><th>Status</th>
       </tr></thead><tbody>`;
       let cardsHtml = '<div class="list-cards">';
 
@@ -937,7 +951,7 @@ const App = (() => {
         const badge = getCardStatusBadge(card.id);
         tableHtml += `<tr>
           <td class="jp-col">${escapeHtml(card.front)}</td>
-          <td>${escapeHtml(romaji)}</td>
+          <td class="romaji-col">${escapeHtml(romaji)}</td>
           <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
           <td>${badge}</td>
         </tr>`;
@@ -957,6 +971,7 @@ const App = (() => {
 
     renderList('');
     search.oninput = () => renderList(search.value);
+    syncRomajiToggle(true);
   }
 
   // ===== List View =====
@@ -1017,7 +1032,7 @@ const App = (() => {
       // Table for desktop
       let tableHtml = `<table class="list-table"><thead><tr>
         <th>Japanisch</th>
-        <th>${col2Header}</th>
+        <th${isKana ? '' : ' class="romaji-col"'}>${col2Header}</th>
         ${col3Header ? `<th>${col3Header}</th>` : ''}
         <th>Status</th>
       </tr></thead><tbody>`;
@@ -1045,7 +1060,7 @@ const App = (() => {
           const hint = card.hint ? ` (${card.hint})` : '';
           tableHtml += `<tr>
             <td class="jp-col">${escapeHtml(card.front)}</td>
-            <td>${escapeHtml(romaji)}</td>
+            <td class="romaji-col">${escapeHtml(romaji)}</td>
             <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
             <td>${badge}</td>
           </tr>`;
@@ -1065,6 +1080,7 @@ const App = (() => {
 
     renderList('');
     search.oninput = () => renderList(search.value);
+    syncRomajiToggle(!isKana);
   }
 
   // ===== Stats View =====
@@ -1403,6 +1419,12 @@ const App = (() => {
           e.preventDefault();
         }
       }
+    });
+
+    document.getElementById('romaji-toggle').addEventListener('change', (e) => {
+      const visible = e.target.checked;
+      localStorage.setItem('nihongo_romaji_visible', visible);
+      document.getElementById('view-list').classList.toggle('romaji-hidden', !visible);
     });
 
     setupExportImport();
