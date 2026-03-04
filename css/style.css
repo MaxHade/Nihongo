@@ -911,6 +911,46 @@ body {
   margin-top: 2px;
 }
 
+/* ===== Difficult Banner ===== */
+.difficult-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-size: 0.85rem;
+}
+
+.difficult-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.difficult-banner:active {
+  transform: scale(0.97);
+}
+
+.difficult-banner-icon {
+  flex-shrink: 0;
+}
+
+.difficult-banner-text {
+  flex: 1;
+  font-weight: 600;
+}
+
+.difficult-banner-action {
+  color: var(--danger);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ===== Mini Week Dots ===== */
 .mini-week {
   display: flex;

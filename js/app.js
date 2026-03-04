@@ -20,12 +20,12 @@ const App = (() => {
         all_rev: 'Alles (Rückwärts)'
       }
     },
+    kanji:       { emoji: '漢', name: 'Kanji', subs: { n5: 'JLPT N5' } },
     dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten' } },
     times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', duration: 'Dauer', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben', greetings: 'Floskeln', colors: 'Farben', food: 'Essen & Trinken', directions: 'Richtungen', body: 'Körperteile' } },
     particles:   { emoji: '🔗', name: 'Partikeln', subs: { particles: 'Alle Partikeln' } },
-    kanji:       { emoji: '漢', name: 'Kanji', subs: { n5: 'JLPT N5' } },
     lessons:     { emoji: '📝', name: 'Lektionen', subs: {
       lesson1: 'Lektion 1', lesson2: 'Lektion 2', lesson3: 'Lektion 3', lesson4: 'Lektion 4', lesson5: 'Lektion 5',
       lesson6: 'Lektion 6', lesson7: 'Lektion 7', lesson8: 'Lektion 8', lesson9: 'Lektion 9', lesson10: 'Lektion 10',
@@ -238,6 +238,23 @@ const App = (() => {
     grid.innerHTML = '';
     grid.parentNode.insertBefore(dailyCard, grid);
 
+    // Schwierigste Karten banner
+    const oldDifficult = document.querySelector('.difficult-banner');
+    if (oldDifficult) oldDifficult.remove();
+
+    const difficultCards = getDifficultCards();
+    if (difficultCards.length > 0) {
+      const difficultBanner = document.createElement('div');
+      difficultBanner.className = 'difficult-banner';
+      difficultBanner.innerHTML = `
+        <span class="difficult-banner-icon">🔴</span>
+        <span class="difficult-banner-text">${difficultCards.length} schwierige Karten</span>
+        <span class="difficult-banner-action">Üben →</span>
+      `;
+      difficultBanner.addEventListener('click', () => navigate('#learn/_difficult/all'));
+      grid.parentNode.insertBefore(difficultBanner, grid);
+    }
+
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
       const cards = Flashcard.getCardsByCategory(cat);
 
@@ -403,7 +420,7 @@ const App = (() => {
 
     // Back button
     document.getElementById('flashcard-back').onclick = () => {
-      if (category === '_daily') {
+      if (category === '_daily' || category === '_difficult') {
         navigate('#dashboard');
         return;
       }
@@ -439,6 +456,12 @@ const App = (() => {
       }));
       currentCards = dueCards.concat(nonDueCards).slice(0, 15);
     }
+    // Special handling for difficult cards
+    else if (category === '_difficult') {
+      errorToggle.checked = false;
+      errorToggle.disabled = true;
+      currentCards = Flashcard.shuffle(getDifficultCards());
+    }
     // Special handling for random_time
     else if (sub === 'random_time') {
       currentCards = generateRandomTimeCards(10);
@@ -464,7 +487,7 @@ const App = (() => {
     }
 
     errorToggle.onchange = () => {
-      if (category === '_daily') return;
+      if (category === '_daily' || category === '_difficult') return;
       const mode = errorToggle.checked ? '/errors' : '';
       navigate(`#learn/${category}/${sub}${mode}`);
     };
@@ -1006,6 +1029,7 @@ const App = (() => {
       : Flashcard.getCardsByCategory(category);
 
     const isKana = (category === 'hiragana' || category === 'katakana');
+    const isKanji = (category === 'kanji');
 
     const search = document.getElementById('list-search');
     search.value = '';
@@ -1030,6 +1054,9 @@ const App = (() => {
       if (isKana) {
         col2Header = 'Romaji';
         col3Header = '';
+      } else if (isKanji) {
+        col2Header = 'Lesung';
+        col3Header = 'Bedeutung';
       } else {
         col2Header = 'Romaji';
         col3Header = 'Bedeutung';
@@ -1038,7 +1065,7 @@ const App = (() => {
       // Table for desktop
       let tableHtml = `<table class="list-table"><thead><tr>
         <th>Japanisch</th>
-        <th${isKana ? '' : ' class="romaji-col"'}>${col2Header}</th>
+        <th${(isKana || isKanji) ? '' : ' class="romaji-col"'}>${col2Header}</th>
         ${col3Header ? `<th>${col3Header}</th>` : ''}
         <th>Status</th>
       </tr></thead><tbody>`;
@@ -1058,6 +1085,21 @@ const App = (() => {
           cardsHtml += `<div class="list-card-item">
             <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(card.back)}</div>
+          </div>`;
+        } else if (isKanji) {
+          // Kanji: front = kanji, hint = reading, back = meaning
+          const reading = card.hint || '';
+          const meaning = card.back || '';
+          tableHtml += `<tr>
+            <td class="jp-col">${escapeHtml(card.front)}</td>
+            <td>${escapeHtml(reading)}</td>
+            <td>${escapeHtml(meaning)}</td>
+            <td>${badge}</td>
+          </tr>`;
+          cardsHtml += `<div class="list-card-item">
+            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
+            <div class="list-card-romaji">${escapeHtml(reading)}</div>
+            <div class="list-card-hint">${escapeHtml(meaning)}</div>
           </div>`;
         } else {
           // Non-kana: front = Japanese, romaji = reading, back = meaning
@@ -1086,7 +1128,7 @@ const App = (() => {
 
     renderList('');
     search.oninput = () => renderList(search.value);
-    syncRomajiToggle(!isKana);
+    syncRomajiToggle(!isKana && !isKanji);
   }
 
   // ===== Stats View =====
