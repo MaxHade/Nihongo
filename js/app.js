@@ -21,7 +21,7 @@ const App = (() => {
       }
     },
     dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten' } },
-    times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', random_time: 'Zufällige Uhrzeit' } },
+    times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', duration: 'Dauer', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben' } },
     particles:   { emoji: '🔗', name: 'Partikeln', subs: { particles: 'Alle Partikeln' } },
@@ -660,12 +660,18 @@ const App = (() => {
     }
 
     document.getElementById('summary-restart').onclick = () => {
+      let target;
       if (currentCategory === '_daily') {
-        navigate('#learn/_daily/all');
-        return;
+        target = '#learn/_daily/all';
+      } else {
+        const mode = document.getElementById('error-mode-toggle').checked ? '/errors' : '';
+        target = `#learn/${currentCategory}/${currentSub}${mode}`;
       }
-      const mode = document.getElementById('error-mode-toggle').checked ? '/errors' : '';
-      navigate(`#learn/${currentCategory}/${currentSub}${mode}`);
+      if (window.location.hash === target) {
+        handleRoute();
+      } else {
+        navigate(target);
+      }
     };
 
     document.getElementById('summary-back').onclick = () => {

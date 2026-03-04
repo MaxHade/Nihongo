@@ -35,5 +35,20 @@ var DATA_TIMES = [
   {id: "time_31", front: "ごじゅっぷん", back: "50 Minuten", romaji: "gojuppun", category: "times", sub: "minutes"},
   {id: "time_32", front: "ごじゅうごふん", back: "55 Minuten", romaji: "gojuugofun", category: "times", sub: "minutes"},
   {id: "time_33", front: "はん", back: "halb/30 Min.", romaji: "han", category: "times", sub: "minutes"},
-  {id: "time_34", front: "なんぷん", back: "Wie viele Minuten?", romaji: "nanpun", category: "times", sub: "minutes"}
+  {id: "time_34", front: "なんぷん", back: "Wie viele Minuten?", romaji: "nanpun", category: "times", sub: "minutes"},
+
+  // Duration (時間)
+  {id: "time_35", front: "いちじかん", back: "1 Stunde", romaji: "ichijikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_36", front: "にじかん", back: "2 Stunden", romaji: "nijikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_37", front: "さんじかん", back: "3 Stunden", romaji: "sanjikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_38", front: "よじかん", back: "4 Stunden", romaji: "yojikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_39", front: "ごじかん", back: "5 Stunden", romaji: "gojikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_40", front: "ろくじかん", back: "6 Stunden", romaji: "rokujikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_41", front: "しちじかん", back: "7 Stunden", romaji: "shichijikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_42", front: "はちじかん", back: "8 Stunden", romaji: "hachijikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_43", front: "くじかん", back: "9 Stunden", romaji: "kujikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_44", front: "じゅうじかん", back: "10 Stunden", romaji: "juujikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_45", front: "はんじかん", back: "halbe Stunde", romaji: "hanjikan", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_46", front: "いちじかんはん", back: "eineinhalb Stunden", romaji: "ichijikan han", hint: "Dauer (時間)", category: "times", sub: "duration"},
+  {id: "time_47", front: "なんじかん", back: "Wie viele Stunden?", romaji: "nanjikan", hint: "Dauer (時間)", category: "times", sub: "duration"}
 ];

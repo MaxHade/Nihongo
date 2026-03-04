@@ -127,17 +127,17 @@ var DATA_NUMBERS = [
   {id: "num_79", front: "なんだい", back: "wie viele?", romaji: "nandai", hint: "Maschinen/Fahrzeuge (台)", category: "numbers", sub: "counters"},
 
   // --- 階 counter (floors) ---
-  {id: "num_80", front: "いっかい", back: "1", romaji: "ikkai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_81", front: "にかい", back: "2", romaji: "nikai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_82", front: "さんがい", back: "3", romaji: "sangai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_120", front: "よんかい", back: "4", romaji: "yonkai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_121", front: "ごかい", back: "5", romaji: "gokai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_122", front: "ろっかい", back: "6", romaji: "rokkai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_123", front: "ななかい", back: "7", romaji: "nanakai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_124", front: "はっかい", back: "8", romaji: "hakkai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_125", front: "きゅうかい", back: "9", romaji: "kyuukai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_126", front: "じゅっかい", back: "10", romaji: "jukkai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
-  {id: "num_83", front: "なんがい", back: "wie viele?", romaji: "nangai", hint: "Stockwerke (階)", category: "numbers", sub: "counters"},
+  {id: "num_80", front: "いっかい", back: "1", romaji: "ikkai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_81", front: "にかい", back: "2", romaji: "nikai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_82", front: "さんがい", back: "3", romaji: "sangai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_120", front: "よんかい", back: "4", romaji: "yonkai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_121", front: "ごかい", back: "5", romaji: "gokai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_122", front: "ろっかい", back: "6", romaji: "rokkai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_123", front: "ななかい", back: "7", romaji: "nanakai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_124", front: "はっかい", back: "8", romaji: "hakkai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_125", front: "きゅうかい", back: "9", romaji: "kyuukai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_126", front: "じゅっかい", back: "10", romaji: "jukkai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
+  {id: "num_83", front: "なんがい", back: "wie viele?", romaji: "nangai", hint: "Stockwerke (階) / Mal (回)", category: "numbers", sub: "counters"},
 
   // --- 冊 counter (books) ---
   {id: "num_84", front: "いっさつ", back: "1", romaji: "issatsu", hint: "Bücher (冊)", category: "numbers", sub: "counters"},
