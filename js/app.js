@@ -238,23 +238,6 @@ const App = (() => {
     grid.innerHTML = '';
     grid.parentNode.insertBefore(dailyCard, grid);
 
-    // Schwierigste Karten banner
-    const oldDifficult = document.querySelector('.difficult-banner');
-    if (oldDifficult) oldDifficult.remove();
-
-    const difficultCards = getDifficultCards();
-    if (difficultCards.length > 0) {
-      const difficultBanner = document.createElement('div');
-      difficultBanner.className = 'difficult-banner';
-      difficultBanner.innerHTML = `
-        <span class="difficult-banner-icon">🔴</span>
-        <span class="difficult-banner-text">${difficultCards.length} schwierige Karten</span>
-        <span class="difficult-banner-action">Üben →</span>
-      `;
-      difficultBanner.addEventListener('click', () => navigate('#learn/_difficult/all'));
-      grid.parentNode.insertBefore(difficultBanner, grid);
-    }
-
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
       const cards = Flashcard.getCardsByCategory(cat);
 
@@ -847,19 +830,21 @@ const App = (() => {
 
     searchInput.oninput = () => renderGlobalSearch(searchInput.value.trim());
 
-    // Difficult cards virtual entry
+    // Schwierigste Karten banner (in Listen-Ansicht)
+    const oldDifficult = document.querySelector('.difficult-banner');
+    if (oldDifficult) oldDifficult.remove();
+
     const difficultCards = getDifficultCards();
     if (difficultCards.length > 0) {
-      const el = document.createElement('div');
-      el.className = 'category-card';
-      el.style.borderColor = 'var(--danger)';
-      el.innerHTML = `
-        <span class="category-emoji">🔴</span>
-        <div class="category-name">Schwierigste Karten</div>
-        <div class="category-count">${difficultCards.length} Einträge</div>
+      const difficultBanner = document.createElement('div');
+      difficultBanner.className = 'difficult-banner';
+      difficultBanner.innerHTML = `
+        <span class="difficult-banner-icon">🔴</span>
+        <span class="difficult-banner-text">${difficultCards.length} schwierige Karten</span>
+        <span class="difficult-banner-action">Anzeigen →</span>
       `;
-      el.addEventListener('click', () => navigate('#list/_difficult'));
-      grid.appendChild(el);
+      difficultBanner.addEventListener('click', () => navigate('#list/_difficult'));
+      grid.parentNode.insertBefore(difficultBanner, searchInput);
     }
 
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
