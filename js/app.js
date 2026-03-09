@@ -21,7 +21,7 @@ const App = (() => {
       }
     },
     kanji:       { emoji: '漢', name: 'Kanji', subs: { n5: 'JLPT N5' } },
-    dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten' } },
+    dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten', random_date: 'Zufälliges Datum' } },
     times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', duration: 'Dauer', random_time: 'Zufällige Uhrzeit' } },
     numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben', greetings: 'Floskeln', colors: 'Farben', food: 'Essen & Trinken', directions: 'Richtungen', body: 'Körperteile' } },
@@ -318,6 +318,25 @@ const App = (() => {
         continue;
       }
 
+      // Special handling for random_date
+      if (sub === 'random_date') {
+        const el = document.createElement('div');
+        el.className = 'subcategory-card';
+        el.innerHTML = `
+          <div class="category-name">${subName}</div>
+          <div class="category-count">10 zufällige Datumsangaben</div>
+          <div class="sub-actions">
+            <button class="sub-action-btn" data-action="learn">Üben</button>
+          </div>
+        `;
+        el.querySelector('[data-action="learn"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          navigate(`#learn/${category}/${sub}`);
+        });
+        grid.appendChild(el);
+        continue;
+      }
+
       const cards = Flashcard.getCardsBySubcategory(category, sub);
       if (cards.length === 0) continue; // Skip empty subcategories
 
@@ -389,6 +408,129 @@ const App = (() => {
     return cards;
   }
 
+  // ===== Random Date Generation =====
+  function generateRandomDateCards(count) {
+    count = count || 10;
+    const months = (typeof DATA_DATES !== 'undefined' ? DATA_DATES : []).filter(c => c.sub === 'months' && c.id !== 'date_21');
+    const days = (typeof DATA_DATES !== 'undefined' ? DATA_DATES : []).filter(c => c.sub === 'days' && c.id !== 'date_53');
+
+    if (months.length === 0 || days.length === 0) return [];
+
+    // Max days per month (index 1-12)
+    const maxDays = { 1: 31, 2: 29, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31 };
+
+    // Month name mapping from back field
+    const monthNames = {
+      'Januar': 1, 'Februar': 2, 'März': 3, 'April': 4, 'Mai': 5, 'Juni': 6,
+      'Juli': 7, 'August': 8, 'September': 9, 'Oktober': 10, 'November': 11, 'Dezember': 12
+    };
+
+    const cards = [];
+    for (let i = 0; i < count; i++) {
+      let month, day, monthNum, dayNum;
+      do {
+        month = months[Math.floor(Math.random() * months.length)];
+        day = days[Math.floor(Math.random() * days.length)];
+        monthNum = monthNames[month.back] || 1;
+        dayNum = parseInt(day.back) || 1;
+      } while (dayNum > maxDays[monthNum]);
+
+      cards.push({
+        id: `random_date_${i}`,
+        front: `${month.front} ${day.front}`,
+        back: `${dayNum}. ${month.back}`,
+        romaji: `${month.romaji} ${day.romaji}`,
+        category: 'dates',
+        sub: 'random_date',
+        isGenerated: true
+      });
+    }
+    return cards;
+  }
+
+  // ===== Kanji Stroke Order =====
+  let strokeAnimationTimers = [];
+
+  function showStrokeOrder(kanji) {
+    const modal = document.getElementById('stroke-modal');
+    const container = document.getElementById('stroke-container');
+    container.innerHTML = '<p style="color:var(--text-secondary)">Lade Strichfolge...</p>';
+    modal.classList.remove('hidden');
+
+    const codePoint = kanji.codePointAt(0).toString(16).padStart(5, '0');
+    const svgUrl = `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${codePoint}.svg`;
+
+    fetch(svgUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
+        return res.text();
+      })
+      .then(svgText => {
+        container.innerHTML = svgText;
+        const svg = container.querySelector('svg');
+        if (svg) {
+          svg.removeAttribute('width');
+          svg.removeAttribute('height');
+          svg.setAttribute('viewBox', '0 0 109 109');
+          animateStrokes(svg);
+        }
+      })
+      .catch(() => {
+        container.innerHTML = '<p style="color:var(--text-secondary)">Strichfolge nicht verfügbar.</p>';
+      });
+
+    document.getElementById('stroke-close').onclick = () => {
+      modal.classList.add('hidden');
+      clearStrokeTimers();
+    };
+
+    document.getElementById('stroke-replay').onclick = () => {
+      const svg = container.querySelector('svg');
+      if (svg) animateStrokes(svg);
+    };
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+        clearStrokeTimers();
+      }
+    };
+  }
+
+  function clearStrokeTimers() {
+    strokeAnimationTimers.forEach(t => clearTimeout(t));
+    strokeAnimationTimers = [];
+  }
+
+  function animateStrokes(svg) {
+    clearStrokeTimers();
+    const paths = svg.querySelectorAll('path');
+    paths.forEach(path => {
+      path.style.stroke = 'var(--text)';
+      path.style.fill = 'none';
+      path.style.strokeWidth = '3';
+      path.style.strokeLinecap = 'round';
+      path.style.strokeLinejoin = 'round';
+      const length = path.getTotalLength();
+      path.style.strokeDasharray = length;
+      path.style.strokeDashoffset = length;
+      path.style.animation = 'none';
+      path.style.opacity = '0';
+    });
+
+    const delayPerStroke = 600;
+    const drawDuration = 500;
+
+    paths.forEach((path, i) => {
+      const timer = setTimeout(() => {
+        path.style.opacity = '1';
+        path.style.transition = `stroke-dashoffset ${drawDuration}ms ease`;
+        path.style.strokeDashoffset = '0';
+      }, i * delayPerStroke);
+      strokeAnimationTimers.push(timer);
+    });
+  }
+
   // ===== Flashcard Learning =====
   function startLearning(category, sub, errorsOnly) {
     const view = document.getElementById('view-flashcard');
@@ -408,7 +550,7 @@ const App = (() => {
         return;
       }
       const nonEmptySubs = Object.keys(CATEGORY_META[category]?.subs || {}).filter(s =>
-        Flashcard.getCardsBySubcategory(category, s).length > 0 || s === 'random_time'
+        Flashcard.getCardsBySubcategory(category, s).length > 0 || s === 'random_time' || s === 'random_date'
       );
       if (nonEmptySubs.length <= 1) {
         navigate('#dashboard');
@@ -448,6 +590,12 @@ const App = (() => {
     // Special handling for random_time
     else if (sub === 'random_time') {
       currentCards = generateRandomTimeCards(10);
+      errorToggle.checked = false;
+      errorToggle.disabled = true;
+    }
+    // Special handling for random_date
+    else if (sub === 'random_date') {
+      currentCards = generateRandomDateCards(10);
       errorToggle.checked = false;
       errorToggle.disabled = true;
     } else {
@@ -511,6 +659,15 @@ const App = (() => {
       document.getElementById('card-audio').onclick = () => Speech.speak(card.back);
     } else {
       document.getElementById('card-audio').onclick = () => Speech.speak(card.front);
+    }
+
+    // Stroke order button for kanji
+    const strokeBtn = document.getElementById('card-stroke-btn');
+    if (card.category === 'kanji') {
+      strokeBtn.classList.remove('hidden');
+      strokeBtn.onclick = () => showStrokeOrder(card.front);
+    } else {
+      strokeBtn.classList.add('hidden');
     }
 
     // Reset answer section
@@ -688,7 +845,7 @@ const App = (() => {
         return;
       }
       const nonEmptySubs = Object.keys(CATEGORY_META[currentCategory]?.subs || {}).filter(s =>
-        Flashcard.getCardsBySubcategory(currentCategory, s).length > 0 || s === 'random_time'
+        Flashcard.getCardsBySubcategory(currentCategory, s).length > 0 || s === 'random_time' || s === 'random_date'
       );
       if (nonEmptySubs.length <= 1) {
         navigate('#dashboard');
@@ -866,7 +1023,7 @@ const App = (() => {
       el.addEventListener('click', () => {
         // Only show non-reverse, non-empty subs for lists
         const listSubs = Object.keys(meta.subs).filter(s =>
-          !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' &&
+          !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' && s !== 'random_date' &&
           Flashcard.getCardsBySubcategory(cat, s).length > 0
         );
         if (listSubs.length <= 1) {
@@ -893,7 +1050,7 @@ const App = (() => {
 
     for (const [sub, subName] of Object.entries(meta.subs)) {
       // Skip reverse/virtual subs and empty subs in list view
-      if (sub.endsWith('_rev') || sub === 'all' || sub === 'all_rev' || sub === 'random_time') continue;
+      if (sub.endsWith('_rev') || sub === 'all' || sub === 'all_rev' || sub === 'random_time' || sub === 'random_date') continue;
       const cards = Flashcard.getCardsBySubcategory(category, sub);
       if (cards.length === 0) continue;
 
@@ -1001,7 +1158,7 @@ const App = (() => {
 
     document.getElementById('list-back').onclick = () => {
       const listSubs = Object.keys(meta?.subs || {}).filter(s =>
-        !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' &&
+        !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' && s !== 'random_date' &&
         Flashcard.getCardsBySubcategory(category, s).length > 0
       );
       if (listSubs.length <= 1) {

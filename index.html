@@ -45,7 +45,10 @@
         <div id="flashcard" class="flashcard">
           <div id="card-front" class="card-front"></div>
           <div id="card-hint" class="card-hint"></div>
-          <button id="card-audio" class="audio-btn" aria-label="Aussprechen">🔊</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="card-audio" class="audio-btn" aria-label="Aussprechen">🔊</button>
+            <button id="card-stroke-btn" class="audio-btn hidden" aria-label="Strichfolge">筆</button>
+          </div>
         </div>
         <div id="answer-section">
           <form id="answer-form">
@@ -128,6 +131,15 @@
       <span class="nav-label">Statistik</span>
     </button>
   </nav>
+
+  <div id="stroke-modal" class="stroke-modal hidden">
+    <div class="stroke-modal-content">
+      <button id="stroke-close" class="stroke-close">&times;</button>
+      <h3>Strichfolge</h3>
+      <div id="stroke-container"></div>
+      <button id="stroke-replay" class="secondary-btn">Wiederholen</button>
+    </div>
+  </div>
 
   <div id="confetti-container"></div>
 
