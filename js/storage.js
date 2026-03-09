@@ -155,13 +155,14 @@ const Storage = (() => {
     const today = new Date().toISOString().slice(0, 10);
     const session = getTodaySession();
 
-    // Include today if user has reviewed
+    // Only count days where daily goal was reached
+    const goal = getDailyGoal();
     let streak = 0;
     let date = new Date();
 
     // Check if today counts
-    const todayData = history[today] || (session.reviewed > 0 ? session : null);
-    if (!todayData || todayData.reviewed === 0) {
+    const todayData = history[today] || (session.reviewed >= goal ? session : null);
+    if (!todayData || todayData.reviewed < goal) {
       // Today doesn't count — start checking from yesterday
       date.setDate(date.getDate() - 1);
     }
@@ -170,10 +171,10 @@ const Storage = (() => {
     while (true) {
       const dateStr = date.toISOString().slice(0, 10);
       const dayData = history[dateStr];
-      if (dayData && dayData.reviewed > 0) {
+      if (dayData && dayData.reviewed >= goal) {
         streak++;
         date.setDate(date.getDate() - 1);
-      } else if (dateStr === today && session.reviewed > 0) {
+      } else if (dateStr === today && session.reviewed >= goal) {
         streak++;
         date.setDate(date.getDate() - 1);
       } else {

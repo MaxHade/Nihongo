@@ -611,6 +611,8 @@ const App = (() => {
     // Don't persist generated cards (random time)
     if (!card.isGenerated) {
       Flashcard.rateCard(card.id, rating);
+    } else {
+      Storage.updateTodaySession(rating);
     }
 
     sessionRatings[rating]++;
