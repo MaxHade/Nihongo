@@ -113,7 +113,7 @@ const Playlist = (() => {
 
   function updatePlayButton() {
     const btn = document.getElementById('playlist-play');
-    if (btn) btn.textContent = playing ? '⏸' : '▶';
+    if (btn) btn.textContent = playing ? '❚❚' : '▶';
   }
 
   function highlightTrack() {
