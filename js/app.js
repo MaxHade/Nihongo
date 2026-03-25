@@ -248,7 +248,7 @@ const App = (() => {
       <span class="daily-challenge-emoji">🎯</span>
       <div class="daily-challenge-text">
         <span class="daily-challenge-title">Tägliche Herausforderung</span>
-        <span class="daily-challenge-sub">15 zufällige Karten aus allen Kategorien</span>
+        <span class="daily-challenge-sub">15 zufällige Karten (Vokabeln, Datum, Uhrzeiten, Zahlen)</span>
       </div>
     `;
     dailyCard.addEventListener('click', () => navigate('#learn/_daily/all'));
@@ -515,7 +515,7 @@ const App = (() => {
     for (let i = 2; i <= 20; i++) {
       trackList.push({
         title: 'Lektion ' + i,
-        src: 'audio/grammar/lesson' + i + '.mp3'
+        src: 'audio/grammar/lesson' + i + '.m4a'
       });
     }
 
@@ -738,8 +738,9 @@ const App = (() => {
       errorToggle.checked = false;
       errorToggle.disabled = true;
 
-      // Collect 15 cards: prefer due cards, fill with random
-      const allCards = Flashcard.getAllCards().filter(c => !c.id.includes('_rev_'));
+      // Collect 15 cards from: vocabulary, dates, times, numbers (no kana/kanji/particles)
+      const dailyCategories = ['vocabulary', 'dates', 'times', 'numbers'];
+      const allCards = Flashcard.getAllCards().filter(c => !c.id.includes('_rev_') && dailyCategories.includes(c.category));
       const now = Date.now();
       const dueCards = Flashcard.shuffle(allCards.filter(card => {
         const progress = Storage.getProgress(card.id);
