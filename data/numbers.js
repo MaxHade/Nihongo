@@ -38,10 +38,10 @@ var DATA_NUMBERS = [
   {id: "num_34", front: "ななひゃく", back: "700", romaji: "nanahyaku", category: "numbers", sub: "basic"},
   {id: "num_35", front: "はっぴゃく", back: "800", romaji: "happyaku", category: "numbers", sub: "basic"},
   {id: "num_36", front: "きゅうひゃく", back: "900", romaji: "kyuuhyaku", category: "numbers", sub: "basic"},
-  {id: "num_37", front: "せん", back: "1.000", romaji: "sen", category: "numbers", sub: "basic"},
-  {id: "num_38", front: "いちまん", back: "10.000", romaji: "ichiman", category: "numbers", sub: "basic"},
-  {id: "num_39", front: "じゅうまん", back: "100.000", romaji: "juuman", category: "numbers", sub: "basic"},
-  {id: "num_40", front: "ひゃくまん", back: "1.000.000", romaji: "hyakuman", category: "numbers", sub: "basic"},
+  {id: "num_37", front: "せん", back: "1.000", romaji: "sen", alt: ["1000"], category: "numbers", sub: "basic"},
+  {id: "num_38", front: "いちまん", back: "10.000", romaji: "ichiman", alt: ["10000"], category: "numbers", sub: "basic"},
+  {id: "num_39", front: "じゅうまん", back: "100.000", romaji: "juuman", alt: ["100000"], category: "numbers", sub: "basic"},
+  {id: "num_40", front: "ひゃくまん", back: "1.000.000", romaji: "hyakuman", alt: ["1000000"], category: "numbers", sub: "basic"},
   {id: "num_41", front: "れい", back: "0", romaji: "rei", hint: "auch ゼロ", category: "numbers", sub: "basic"},
 
   // ============================================================

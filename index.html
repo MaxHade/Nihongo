@@ -59,8 +59,6 @@
           <div id="answer-result" class="answer-result hidden"></div>
           <div id="rating-buttons" class="rating-buttons hidden">
             <button class="rate-btn rate-again" data-rating="again">Nochmal</button>
-            <button class="rate-btn rate-hard" data-rating="hard">Schwer</button>
-            <button class="rate-btn rate-good" data-rating="good">Gut</button>
             <button class="rate-btn rate-easy" data-rating="easy">Einfach</button>
           </div>
         </div>
@@ -81,6 +79,35 @@
       <input type="text" id="list-search" placeholder="Suchen..." autocomplete="off">
       <label id="romaji-toggle-label"><input type="checkbox" id="romaji-toggle" checked> Romaji anzeigen</label>
       <div id="list-content"></div>
+    </section>
+
+    <!-- Grammar Text View -->
+    <section id="view-grammar-text" class="view">
+      <button class="back-btn" id="grammar-text-back">← Zurück</button>
+      <h2 id="grammar-text-title"></h2>
+      <div id="grammar-text-content" class="grammar-text-content"></div>
+    </section>
+
+    <!-- Grammar Playlist View -->
+    <section id="view-grammar-playlist" class="view">
+      <button class="back-btn" id="grammar-playlist-back">← Zurück</button>
+      <h2>Grammatik Audio</h2>
+      <div id="playlist-player" class="playlist-player">
+        <div id="playlist-track-title" class="playlist-track-title">Kein Track geladen</div>
+        <div class="playlist-controls">
+          <button id="playlist-prev" class="playlist-btn">⏮</button>
+          <button id="playlist-play" class="playlist-btn playlist-play-btn">▶</button>
+          <button id="playlist-next" class="playlist-btn">⏭</button>
+        </div>
+        <div class="playlist-progress-container" id="playlist-progress-container">
+          <span id="playlist-time-current">0:00</span>
+          <div class="playlist-progress-bar" id="playlist-progress-bar">
+            <div class="playlist-progress-fill" id="playlist-progress-fill"></div>
+          </div>
+          <span id="playlist-time-total">0:00</span>
+        </div>
+      </div>
+      <div id="playlist-tracklist" class="playlist-tracklist"></div>
     </section>
 
     <!-- Stats View -->
@@ -120,11 +147,11 @@
   <nav id="bottom-nav">
     <button class="nav-btn active" data-view="dashboard">
       <span class="nav-icon">📚</span>
-      <span class="nav-label">Lernen</span>
+      <span class="nav-label">Üben</span>
     </button>
     <button class="nav-btn" data-view="list-overview">
       <span class="nav-icon">📋</span>
-      <span class="nav-label">Listen</span>
+      <span class="nav-label">Lernen</span>
     </button>
     <button class="nav-btn" data-view="stats">
       <span class="nav-icon">📊</span>
@@ -158,6 +185,8 @@
   <script src="js/flashcard.js"></script>
   <script src="js/speech.js"></script>
   <script src="js/stats.js"></script>
+  <script src="data/grammar.js"></script>
+  <script src="js/playlist.js"></script>
   <script src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

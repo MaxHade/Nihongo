@@ -5,7 +5,7 @@ const Storage = (() => {
   const HISTORY_KEY = 'nihongo_history';
   const DAILY_GOAL_KEY = 'nihongo_daily_goal';
   const VERSION_KEY = 'nihongo_data_version';
-  const CURRENT_VERSION = 2;
+  const CURRENT_VERSION = 3;
 
   // ===== Migration =====
   function _migrate() {
@@ -31,9 +31,7 @@ const Storage = (() => {
           date: session.date,
           reviewed: session.reviewed || 0,
           again: 0,
-          hard: 0,
-          good: session.correct || 0,
-          easy: 0
+          easy: session.correct || 0
         };
         localStorage.setItem(SESSION_KEY, JSON.stringify(migrated));
       }
@@ -48,9 +46,7 @@ const Storage = (() => {
         history[date] = {
           reviewed: entry.reviewed || 0,
           again: 0,
-          hard: 0,
-          good: entry.correct || 0,
-          easy: 0
+          easy: entry.correct || 0
         };
         historyChanged = true;
       }
@@ -59,6 +55,53 @@ const Storage = (() => {
 
     // Remove old reminders key
     localStorage.removeItem('nihongo_reminders');
+
+    // v3: Migrate hard→again, good→easy (2-button system)
+    if (version < 3) {
+      const prog = _getAll();
+      let progChanged = false;
+      for (const id of Object.keys(prog)) {
+        if (prog[id].lastRating === 'hard') {
+          prog[id].lastRating = 'again';
+          prog[id].interval = 60 * 60 * 1000;
+          prog[id].nextReview = (prog[id].lastReview || Date.now()) + 60 * 60 * 1000;
+          progChanged = true;
+        } else if (prog[id].lastRating === 'good') {
+          prog[id].lastRating = 'easy';
+          prog[id].interval = 21 * 24 * 60 * 60 * 1000;
+          prog[id].nextReview = (prog[id].lastReview || Date.now()) + 21 * 24 * 60 * 60 * 1000;
+          progChanged = true;
+        }
+      }
+      if (progChanged) _saveAll(prog);
+
+      // Migrate session
+      try {
+        const sess = JSON.parse(localStorage.getItem(SESSION_KEY));
+        if (sess && ('hard' in sess || 'good' in sess)) {
+          sess.again = (sess.again || 0) + (sess.hard || 0);
+          sess.easy = (sess.easy || 0) + (sess.good || 0);
+          delete sess.hard;
+          delete sess.good;
+          localStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+        }
+      } catch {}
+
+      // Migrate history
+      const hist = _getHistory();
+      let hChanged = false;
+      for (const date of Object.keys(hist)) {
+        const e = hist[date];
+        if ('hard' in e || 'good' in e) {
+          e.again = (e.again || 0) + (e.hard || 0);
+          e.easy = (e.easy || 0) + (e.good || 0);
+          delete e.hard;
+          delete e.good;
+          hChanged = true;
+        }
+      }
+      if (hChanged) _saveHistory(hist);
+    }
 
     localStorage.setItem(VERSION_KEY, String(CURRENT_VERSION));
   }
@@ -109,8 +152,6 @@ const Storage = (() => {
     history[session.date] = {
       reviewed: session.reviewed,
       again: session.again || 0,
-      hard: session.hard || 0,
-      good: session.good || 0,
       easy: session.easy || 0
     };
     _saveHistory(history);
@@ -130,11 +171,11 @@ const Storage = (() => {
         if (session.date && session.reviewed > 0) {
           saveDayToHistory(session);
         }
-        return { date: today, reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
+        return { date: today, reviewed: 0, again: 0, easy: 0 };
       }
       return session;
     } catch {
-      return { date: today, reviewed: 0, again: 0, hard: 0, good: 0, easy: 0 };
+      return { date: today, reviewed: 0, again: 0, easy: 0 };
     }
   }
 

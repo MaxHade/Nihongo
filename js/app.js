@@ -31,13 +31,24 @@ const App = (() => {
       lesson6: 'Lektion 6', lesson7: 'Lektion 7', lesson8: 'Lektion 8', lesson9: 'Lektion 9', lesson10: 'Lektion 10',
       lesson11: 'Lektion 11', lesson12: 'Lektion 12', lesson13: 'Lektion 13', lesson14: 'Lektion 14', lesson15: 'Lektion 15',
       lesson16: 'Lektion 16', lesson17: 'Lektion 17', lesson18: 'Lektion 18', lesson19: 'Lektion 19', lesson20: 'Lektion 20'
-    }}
+    }},
+    grammar: {
+      emoji: '📐', name: 'Grammatik',
+      subs: {
+        playlist: 'Audio Playlist',
+        lesson2: 'Lektion 2', lesson3: 'Lektion 3', lesson4: 'Lektion 4', lesson5: 'Lektion 5',
+        lesson6: 'Lektion 6', lesson7: 'Lektion 7', lesson8: 'Lektion 8', lesson9: 'Lektion 9', lesson10: 'Lektion 10',
+        lesson11: 'Lektion 11', lesson12: 'Lektion 12', lesson13: 'Lektion 13', lesson14: 'Lektion 14', lesson15: 'Lektion 15',
+        lesson16: 'Lektion 16', lesson17: 'Lektion 17', lesson18: 'Lektion 18', lesson19: 'Lektion 19', lesson20: 'Lektion 20'
+      },
+      isGrammar: true
+    }
   };
 
   // Session state
   let currentCards = [];
   let currentCardIndex = 0;
-  let sessionRatings = { again: 0, hard: 0, good: 0, easy: 0 };
+  let sessionRatings = { again: 0, easy: 0 };
   let currentCategory = null;
   let currentSub = null;
   let previousStreak = 0;
@@ -59,7 +70,7 @@ const App = (() => {
     if (!progress) {
       return '<span class="card-status status-new">Neu</span>';
     }
-    if (progress.lastRating === 'again' || progress.lastRating === 'hard') {
+    if (progress.lastRating === 'again') {
       return '<span class="card-status status-learning">Lernend</span>';
     }
     return '<span class="card-status status-mastered">Gemeistert</span>';
@@ -110,7 +121,7 @@ const App = (() => {
         break;
       case 'category':
         showSubcategories(parts[1]);
-        setNavActive('dashboard');
+        setNavActive(CATEGORY_META[parts[1]]?.isGrammar ? 'list-overview' : 'dashboard');
         break;
       case 'learn':
         startLearning(parts[1], parts[2], parts[3] === 'errors');
@@ -126,6 +137,14 @@ const App = (() => {
         } else {
           showList(parts[1], parts[2]);
         }
+        setNavActive('list-overview');
+        break;
+      case 'grammar-text':
+        showGrammarText(parts[1]);
+        setNavActive('list-overview');
+        break;
+      case 'grammar-playlist':
+        showGrammarPlaylist();
         setNavActive('list-overview');
         break;
       case 'stats':
@@ -239,6 +258,9 @@ const App = (() => {
     grid.parentNode.insertBefore(dailyCard, grid);
 
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
+      // Skip grammar in dashboard (shown in Lernen tab instead)
+      if (meta.isGrammar) continue;
+
       const cards = Flashcard.getCardsByCategory(cat);
 
       if (cards.length === 0) {
@@ -296,7 +318,75 @@ const App = (() => {
     const grid = document.getElementById('subcategory-grid');
     grid.innerHTML = '';
 
-    view.querySelector('.back-btn').onclick = () => navigate('#dashboard');
+    view.querySelector('.back-btn').onclick = () => navigate(meta.isGrammar ? '#list-overview' : '#dashboard');
+
+    // Special handling for grammar category
+    if (meta.isGrammar) {
+      // Remove any leftover search fields
+      view.querySelectorAll('.grammar-search').forEach(el => el.remove());
+
+      // Search field
+      const searchInput = document.createElement('input');
+      searchInput.type = 'text';
+      searchInput.placeholder = 'Grammatik durchsuchen...';
+      searchInput.autocomplete = 'off';
+      searchInput.className = 'grammar-search';
+      grid.parentNode.insertBefore(searchInput, grid);
+
+      const allEntries = [];
+      for (const [sub, subName] of Object.entries(meta.subs)) {
+        const el = document.createElement('div');
+        el.className = 'subcategory-card';
+        if (sub === 'playlist') {
+          el.innerHTML = `
+            <div class="category-name">🎵 ${subName}</div>
+            <div class="category-count">19 Lektionen</div>
+          `;
+          el.addEventListener('click', () => navigate('#grammar-playlist'));
+          allEntries.push({ el, isPlaylist: true, sub });
+        } else {
+          el.innerHTML = `
+            <div class="category-name">${subName}</div>
+            <div class="category-count">Grammatik</div>
+          `;
+          el.addEventListener('click', () => navigate(`#grammar-text/${sub}`));
+          allEntries.push({ el, isPlaylist: false, sub, subName });
+        }
+        grid.appendChild(el);
+      }
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        for (const entry of allEntries) {
+          if (entry.isPlaylist) {
+            entry.el.style.display = '';
+            continue;
+          }
+          if (!q) {
+            entry.el.style.display = '';
+            continue;
+          }
+          // Search in lesson title and section headings
+          let match = entry.subName.toLowerCase().includes(q);
+          if (!match && typeof DATA_GRAMMAR !== 'undefined' && DATA_GRAMMAR[entry.sub]) {
+            const lesson = DATA_GRAMMAR[entry.sub];
+            if (lesson.title && lesson.title.toLowerCase().includes(q)) match = true;
+            if (!match && lesson.sections) {
+              match = lesson.sections.some(s => s.heading && s.heading.toLowerCase().includes(q));
+            }
+          }
+          entry.el.style.display = match ? '' : 'none';
+        }
+      });
+
+      // Clean up search input when navigating away
+      const origBack = view.querySelector('.back-btn').onclick;
+      view.querySelector('.back-btn').onclick = () => {
+        if (searchInput.parentNode) searchInput.remove();
+        navigate(meta.isGrammar ? '#list-overview' : '#dashboard');
+      };
+      return;
+    }
 
     for (const [sub, subName] of Object.entries(meta.subs)) {
       // Special handling for random_time
@@ -345,11 +435,16 @@ const App = (() => {
       const nochmalCards = Flashcard.getNochmalCards(category, sub);
       const nochmalCount = nochmalCards.length;
 
+      const subStats = Stats.getSubcategoryStats(category, sub);
+
       const el = document.createElement('div');
       el.className = 'subcategory-card';
       el.innerHTML = `
         <div class="category-name">${subName}</div>
         <div class="category-count">${cards.length} Karten · ${dueCards.length} fällig</div>
+        <div class="category-progress">
+          <div class="category-progress-fill" style="width: ${subStats.percent}%"></div>
+        </div>
         <div class="sub-actions">
           <button class="sub-action-btn" data-action="learn">Lernen</button>
           ${nochmalCount > 0 ? `<button class="sub-action-btn" data-action="errors">Nur Nochmal (${nochmalCount})</button>` : ''}
@@ -375,6 +470,82 @@ const App = (() => {
 
       grid.appendChild(el);
     }
+  }
+
+  // ===== Grammar Text View =====
+  function showGrammarText(lessonKey) {
+    const view = document.getElementById('view-grammar-text');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    view.classList.add('active');
+
+    document.getElementById('grammar-text-back').onclick = () => navigate('#category/grammar');
+
+    const data = typeof DATA_GRAMMAR !== 'undefined' ? DATA_GRAMMAR[lessonKey] : null;
+    const titleEl = document.getElementById('grammar-text-title');
+    const contentEl = document.getElementById('grammar-text-content');
+
+    if (!data) {
+      titleEl.textContent = 'Lektion nicht gefunden';
+      contentEl.innerHTML = '<p>Diese Lektion ist noch nicht verfügbar.</p>';
+      return;
+    }
+
+    titleEl.textContent = data.title;
+    let html = '';
+    data.sections.forEach(section => {
+      html += `<div class="grammar-section">`;
+      html += `<h3 class="grammar-heading">${section.heading}</h3>`;
+      html += section.content;
+      html += `</div>`;
+    });
+    contentEl.innerHTML = html;
+    window.scrollTo(0, 0);
+  }
+
+  // ===== Grammar Playlist View =====
+  function showGrammarPlaylist() {
+    const view = document.getElementById('view-grammar-playlist');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    view.classList.add('active');
+
+    document.getElementById('grammar-playlist-back').onclick = () => navigate('#category/grammar');
+
+    // Build tracklist
+    const trackList = [];
+    for (let i = 2; i <= 20; i++) {
+      trackList.push({
+        title: 'Lektion ' + i,
+        src: 'audio/grammar/lesson' + i + '.mp3'
+      });
+    }
+
+    Playlist.init(trackList);
+
+    // Render tracklist UI
+    const tracklistEl = document.getElementById('playlist-tracklist');
+    tracklistEl.innerHTML = '';
+    trackList.forEach((track, i) => {
+      const item = document.createElement('div');
+      item.className = 'playlist-track-item' + (i === 0 ? ' active' : '');
+      item.textContent = track.title;
+      item.addEventListener('click', () => {
+        Playlist.loadTrack(i);
+        Playlist.play();
+      });
+      tracklistEl.appendChild(item);
+    });
+
+    // Wire up controls
+    document.getElementById('playlist-play').onclick = () => Playlist.togglePlayPause();
+    document.getElementById('playlist-prev').onclick = () => Playlist.prev();
+    document.getElementById('playlist-next').onclick = () => Playlist.next();
+
+    document.getElementById('playlist-progress-bar').onclick = (e) => {
+      const bar = e.currentTarget;
+      const rect = bar.getBoundingClientRect();
+      const fraction = (e.clientX - rect.left) / rect.width;
+      Playlist.seekTo(fraction);
+    };
   }
 
   // ===== Random Time Generation =====
@@ -624,7 +795,7 @@ const App = (() => {
     };
 
     currentCardIndex = 0;
-    sessionRatings = { again: 0, hard: 0, good: 0, easy: 0 };
+    sessionRatings = { again: 0, easy: 0 };
 
     document.getElementById('session-summary').classList.add('hidden');
     document.getElementById('flashcard-container').classList.remove('hidden');
@@ -708,7 +879,7 @@ const App = (() => {
     const userAnswer = input.value.trim();
 
     // Leeres Feld = Antwort zeigen (als falsch werten)
-    const isCorrect = userAnswer ? Flashcard.checkAnswer(userAnswer, card.back) : false;
+    const isCorrect = userAnswer ? Flashcard.checkAnswer(userAnswer, card.back, card.alt) : false;
 
     // Update UI
     const flashcard = document.getElementById('flashcard');
@@ -795,20 +966,18 @@ const App = (() => {
     const summary = document.getElementById('session-summary');
     summary.classList.remove('hidden');
 
-    const total = sessionRatings.again + sessionRatings.hard + sessionRatings.good + sessionRatings.easy;
-    const goodPercent = total > 0 ? Math.round(((sessionRatings.good + sessionRatings.easy) / total) * 100) : 0;
+    const total = sessionRatings.again + sessionRatings.easy;
+    const easyPercent = total > 0 ? Math.round((sessionRatings.easy / total) * 100) : 0;
 
     document.getElementById('summary-stats').innerHTML = `
       <div>Karten: <strong>${total}</strong></div>
       <div class="summary-easy">Einfach: ${sessionRatings.easy}</div>
-      <div class="summary-good">Gut: ${sessionRatings.good}</div>
-      <div class="summary-hard">Schwer: ${sessionRatings.hard}</div>
       <div class="summary-again">Nochmal: ${sessionRatings.again}</div>
-      <div>Gut/Einfach-Quote: <strong>${goodPercent}%</strong></div>
+      <div>Einfach-Quote: <strong>${easyPercent}%</strong></div>
     `;
 
-    // Confetti for >=80% good+easy and at least some cards
-    if (goodPercent >= 80 && total > 0) {
+    // Confetti for >=80% easy and at least some cards
+    if (easyPercent >= 80 && total > 0) {
       triggerConfetti();
     }
 
@@ -963,7 +1132,7 @@ const App = (() => {
     const oldDailyInList = document.querySelector('.daily-challenge-card');
     if (oldDailyInList) oldDailyInList.remove();
 
-    document.querySelector('#view-dashboard h2').textContent = 'Listen';
+    document.querySelector('#view-dashboard h2').textContent = 'Lernen';
 
     // Global search field
     let searchInput = document.getElementById('global-search');
@@ -1007,6 +1176,20 @@ const App = (() => {
     }
 
     for (const [cat, meta] of Object.entries(CATEGORY_META)) {
+      // Grammar category: show as special card linking to grammar subcategories
+      if (meta.isGrammar) {
+        const el = document.createElement('div');
+        el.className = 'category-card';
+        el.innerHTML = `
+          <span class="category-emoji">${meta.emoji}</span>
+          <div class="category-name">${meta.name}</div>
+          <div class="category-count">19 Lektionen</div>
+        `;
+        el.addEventListener('click', () => navigate('#category/grammar'));
+        grid.appendChild(el);
+        continue;
+      }
+
       const cards = Flashcard.getCardsByCategory(cat);
       if (cards.length === 0) continue;
 
@@ -1282,8 +1465,8 @@ const App = (() => {
 
     const today = Stats.getTodayStats();
     const todayTotal = today.reviewed;
-    const todayGoodRate = todayTotal > 0
-      ? Math.round(((today.good + today.easy) / todayTotal) * 100) : 0;
+    const todayEasyRate = todayTotal > 0
+      ? Math.round((today.easy / todayTotal) * 100) : 0;
 
     document.getElementById('stats-today-content').innerHTML = `
       <div class="stat-row">
@@ -1295,20 +1478,12 @@ const App = (() => {
         <span class="stat-value" style="color:var(--accent)">${today.easy || 0}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Gut</span>
-        <span class="stat-value" style="color:var(--success)">${today.good || 0}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Schwer</span>
-        <span class="stat-value" style="color:var(--warning)">${today.hard || 0}</span>
-      </div>
-      <div class="stat-row">
         <span class="stat-label">Nochmal</span>
         <span class="stat-value" style="color:var(--danger)">${today.again || 0}</span>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Gut/Einfach-Quote</span>
-        <span class="stat-value">${todayGoodRate}%</span>
+        <span class="stat-label">Einfach-Quote</span>
+        <span class="stat-value">${todayEasyRate}%</span>
       </div>
     `;
 
@@ -1332,8 +1507,8 @@ const App = (() => {
         <div class="stat-bar-fill" style="width:${overall.percent}%"></div>
       </div>
       <div class="stat-row">
-        <span class="stat-label">Gut/Einfach-Quote</span>
-        <span class="stat-value">${overall.goodRate}%</span>
+        <span class="stat-label">Einfach-Quote</span>
+        <span class="stat-value">${overall.easyRate}%</span>
       </div>
     `;
 
@@ -1343,8 +1518,8 @@ const App = (() => {
       if (cards.length === 0) continue;
 
       const s = Stats.getCategoryStats(cat);
-      const rated = s.ratings.again + s.ratings.hard + s.ratings.good + s.ratings.easy;
-      const goodRate = rated > 0 ? Math.round(((s.ratings.good + s.ratings.easy) / rated) * 100) : 0;
+      const rated = s.ratings.again + s.ratings.easy;
+      const easyRate = rated > 0 ? Math.round((s.ratings.easy / rated) * 100) : 0;
       catHtml += `
         <div class="stat-row">
           <span class="stat-label">${meta.emoji} ${meta.name}</span>
@@ -1354,8 +1529,8 @@ const App = (() => {
           <div class="stat-bar-fill" style="width:${s.percent}%"></div>
         </div>
         <div class="stat-row-sub">
-          <span class="stat-label">Gut/Einfach-Quote</span>
-          <span class="stat-value">${goodRate}%</span>
+          <span class="stat-label">Einfach-Quote</span>
+          <span class="stat-value">${easyRate}%</span>
         </div>
       `;
     }
@@ -1373,16 +1548,12 @@ const App = (() => {
     let html = '<div class="week-chart">';
     days.forEach(day => {
       const easyWidth = (day.easy / maxReviewed) * 100;
-      const goodWidth = (day.good / maxReviewed) * 100;
-      const hardWidth = (day.hard / maxReviewed) * 100;
       const againWidth = (day.again / maxReviewed) * 100;
       html += `
         <div class="week-chart-row">
           <span class="week-chart-label">${day.label}</span>
           <div class="week-chart-bar-container">
             <div class="week-chart-bar-easy" style="width: ${easyWidth}%"></div>
-            <div class="week-chart-bar-good" style="width: ${goodWidth}%"></div>
-            <div class="week-chart-bar-hard" style="width: ${hardWidth}%"></div>
             <div class="week-chart-bar-again" style="width: ${againWidth}%"></div>
           </div>
           <span class="week-chart-count">${day.reviewed}</span>
@@ -1599,9 +1770,7 @@ const App = (() => {
       // 1/2/3/4 → rate when rating buttons visible
       if (ratingBtns && !ratingBtns.classList.contains('hidden')) {
         if (e.key === '1') { rateAndNext('again'); e.preventDefault(); }
-        else if (e.key === '2') { rateAndNext('hard'); e.preventDefault(); }
-        else if (e.key === '3') { rateAndNext('good'); e.preventDefault(); }
-        else if (e.key === '4') { rateAndNext('easy'); e.preventDefault(); }
+        else if (e.key === '2') { rateAndNext('easy'); e.preventDefault(); }
       }
 
       // Enter/Space → reveal when reveal button visible

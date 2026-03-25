@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nihongo-v15';
+const CACHE_VERSION = 'nihongo-v17';
 const ASSETS = [
   '/',
   '/index.html',
@@ -19,6 +19,8 @@ const ASSETS = [
   '/data/greetings.js',
   '/data/lessons.js',
   '/data/kanji.js',
+  '/data/grammar.js',
+  '/js/playlist.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',

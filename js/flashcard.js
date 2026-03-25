@@ -2,8 +2,6 @@
 const Flashcard = (() => {
   const INTERVALS = {
     again: 60 * 60 * 1000,           // 1 hour
-    hard: 24 * 60 * 60 * 1000,       // 1 day
-    good: 7 * 24 * 60 * 60 * 1000,   // 7 days
     easy: 21 * 24 * 60 * 60 * 1000   // 21 days
   };
 
@@ -50,11 +48,15 @@ const Flashcard = (() => {
   function getDueCards(category, sub) {
     const now = Date.now();
     let cards = sub ? getCardsBySubcategory(category, sub) : getCardsByCategory(category);
-    return shuffle(cards.filter(card => {
+    const due = shuffle(cards.filter(card => {
       const progress = Storage.getProgress(card.id);
       if (!progress) return true; // never reviewed = due
       return progress.nextReview <= now;
     }));
+    // Nochmal-Karten nach vorne
+    const again = due.filter(c => { const p = Storage.getProgress(c.id); return p && p.lastRating === 'again'; });
+    const rest = due.filter(c => { const p = Storage.getProgress(c.id); return !p || p.lastRating !== 'again'; });
+    return [...again, ...rest];
   }
 
   function getNochmalCards(category, sub) {
@@ -80,12 +82,14 @@ const Flashcard = (() => {
     Storage.updateTodaySession(rating);
   }
 
-  function checkAnswer(input, expected) {
+  function checkAnswer(input, expected, alts) {
     // Case-insensitive, normalize whitespace and German umlauts
     const normalize = s => s.trim().toLowerCase()
       .replace(/\s+/g, ' ')
       .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
-    return normalize(input) === normalize(expected);
+    const n = normalize(input);
+    if (n === normalize(expected)) return true;
+    return Array.isArray(alts) && alts.some(a => n === normalize(a));
   }
 
   function getCategories() {

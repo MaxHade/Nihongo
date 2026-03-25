@@ -3,10 +3,10 @@ const Stats = (() => {
   function getCategoryStats(category) {
     const cards = Flashcard.getCardsByCategory(category);
     const total = cards.length;
-    if (total === 0) return { total: 0, learned: 0, percent: 0, ratings: { again: 0, hard: 0, good: 0, easy: 0 } };
+    if (total === 0) return { total: 0, learned: 0, percent: 0, ratings: { again: 0, easy: 0 } };
 
     let learned = 0;
-    const ratings = { again: 0, hard: 0, good: 0, easy: 0 };
+    const ratings = { again: 0, easy: 0 };
 
     cards.forEach(card => {
       const p = Storage.getProgress(card.id);
@@ -31,7 +31,7 @@ const Stats = (() => {
     const total = allCards.length;
     const progress = Storage.getAllProgress();
     const learned = Object.keys(progress).length;
-    const ratings = { again: 0, hard: 0, good: 0, easy: 0 };
+    const ratings = { again: 0, easy: 0 };
 
     Object.values(progress).forEach(p => {
       if (p.lastRating && ratings[p.lastRating] !== undefined) {
@@ -39,15 +39,15 @@ const Stats = (() => {
       }
     });
 
-    const rated = ratings.again + ratings.hard + ratings.good + ratings.easy;
-    const goodRate = rated > 0 ? Math.round(((ratings.good + ratings.easy) / rated) * 100) : 0;
+    const rated = ratings.again + ratings.easy;
+    const easyRate = rated > 0 ? Math.round((ratings.easy / rated) * 100) : 0;
 
     return {
       total,
       learned,
       percent: total > 0 ? Math.round((learned / total) * 100) : 0,
       ratings,
-      goodRate
+      easyRate
     };
   }
 
@@ -74,7 +74,7 @@ const Stats = (() => {
 
       let data = history[dateStr];
       if (dateStr === today.date && today.reviewed > 0) {
-        data = { reviewed: today.reviewed, again: today.again, hard: today.hard, good: today.good, easy: today.easy };
+        data = { reviewed: today.reviewed, again: today.again, easy: today.easy };
       }
 
       days.push({
@@ -82,8 +82,6 @@ const Stats = (() => {
         label,
         reviewed: data ? data.reviewed : 0,
         again: data ? (data.again || 0) : 0,
-        hard: data ? (data.hard || 0) : 0,
-        good: data ? (data.good || 0) : 0,
         easy: data ? (data.easy || 0) : 0
       });
     }
@@ -124,8 +122,18 @@ const Stats = (() => {
     return cells;
   }
 
+  function getSubcategoryStats(category, sub) {
+    const cards = Flashcard.getCardsBySubcategory(category, sub);
+    const total = cards.length;
+    if (total === 0) return { total: 0, learned: 0, percent: 0 };
+    let learned = 0;
+    cards.forEach(card => { if (Storage.getProgress(card.id)) learned++; });
+    return { total, learned, percent: Math.round((learned / total) * 100) };
+  }
+
   return {
     getCategoryStats,
+    getSubcategoryStats,
     getOverallStats,
     getTodayStats,
     getDueCount,
