@@ -1278,17 +1278,58 @@ body {
   background: var(--border);
 }
 
+/* Play/Pause button */
 .playlist-play-btn {
   width: 56px;
   height: 56px;
-  font-size: 1.5rem;
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+  position: relative;
+}
+
+.playlist-play-btn::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 10px 0 10px 18px;
+  border-color: transparent transparent transparent #fff;
+  margin-left: 4px;
+}
+
+.playlist-play-btn.is-playing::before {
+  width: 14px;
+  height: 20px;
+  border: none;
+  border-left: 4px solid #fff;
+  border-right: 4px solid #fff;
+  margin-left: 0;
 }
 
 .playlist-play-btn:hover {
   background: var(--primary-hover);
+}
+
+/* Prev/Next buttons */
+.playlist-prev-btn::before,
+.playlist-next-btn::before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.playlist-prev-btn::before {
+  border-width: 8px 14px 8px 0;
+  border-color: transparent var(--text) transparent transparent;
+}
+
+.playlist-next-btn::before {
+  border-width: 8px 0 8px 14px;
+  border-color: transparent transparent transparent var(--text);
 }
 
 .playlist-progress-container {
