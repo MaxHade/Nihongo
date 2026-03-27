@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nihongo-v20';
+const CACHE_VERSION = 'nihongo-v21';
 const ASSETS = [
   '/',
   '/index.html',
