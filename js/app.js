@@ -1401,17 +1401,20 @@ const App = (() => {
       // Cards for mobile
       let cardsHtml = '<div class="list-cards">';
 
+      const speakBtn = (text) => `<button class="list-speak-btn" data-speak="${escapeHtml(text)}">&#x1f50a;</button>`;
+
       filtered.forEach(card => {
         const badge = getCardStatusBadge(card.id);
+        const audio = speakBtn(card.front);
         if (isKana) {
           // Kana: front = character, back = romaji
           tableHtml += `<tr>
-            <td class="jp-col">${escapeHtml(card.front)}</td>
+            <td class="jp-col">${escapeHtml(card.front)} ${audio}</td>
             <td>${escapeHtml(card.back)}</td>
             <td>${badge}</td>
           </tr>`;
           cardsHtml += `<div class="list-card-item">
-            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
+            <div class="list-card-jp">${escapeHtml(card.front)} ${audio} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(card.back)}</div>
           </div>`;
         } else if (isKanji) {
@@ -1419,13 +1422,13 @@ const App = (() => {
           const reading = card.hint || '';
           const meaning = card.back || '';
           tableHtml += `<tr>
-            <td class="jp-col">${escapeHtml(card.front)}</td>
+            <td class="jp-col">${escapeHtml(card.front)} ${audio}</td>
             <td>${escapeHtml(reading)}</td>
             <td>${escapeHtml(meaning)}</td>
             <td>${badge}</td>
           </tr>`;
           cardsHtml += `<div class="list-card-item">
-            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
+            <div class="list-card-jp">${escapeHtml(card.front)} ${audio} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(reading)}</div>
             <div class="list-card-hint">${escapeHtml(meaning)}</div>
           </div>`;
@@ -1435,13 +1438,13 @@ const App = (() => {
           const meaning = card.back || '';
           const hint = card.hint ? ` (${card.hint})` : '';
           tableHtml += `<tr>
-            <td class="jp-col">${escapeHtml(card.front)}</td>
+            <td class="jp-col">${escapeHtml(card.front)} ${audio}</td>
             <td class="romaji-col">${escapeHtml(romaji)}</td>
             <td>${escapeHtml(meaning)}${escapeHtml(hint)}</td>
             <td>${badge}</td>
           </tr>`;
           cardsHtml += `<div class="list-card-item">
-            <div class="list-card-jp">${escapeHtml(card.front)} ${badge}</div>
+            <div class="list-card-jp">${escapeHtml(card.front)} ${audio} ${badge}</div>
             <div class="list-card-romaji">${escapeHtml(romaji)}</div>
             <div class="list-card-hint">${escapeHtml(meaning)}${escapeHtml(hint)}</div>
           </div>`;
@@ -1452,6 +1455,14 @@ const App = (() => {
       cardsHtml += '</div>';
 
       content.innerHTML = tableHtml + cardsHtml;
+
+      // Attach speech event listeners
+      content.querySelectorAll('.list-speak-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Speech.speak(btn.dataset.speak);
+        });
+      });
     }
 
     renderList('');
