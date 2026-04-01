@@ -511,7 +511,9 @@ const App = (() => {
     document.getElementById('grammar-playlist-back').onclick = () => navigate('#category/grammar');
 
     // Build tracklist
-    const trackList = [];
+    const trackList = [
+      { title: 'Podcast (Lektion 1-20)', src: 'audio/grammar/podcast.m4a' }
+    ];
     for (let i = 2; i <= 20; i++) {
       trackList.push({
         title: 'Lektion ' + i,
