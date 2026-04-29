@@ -281,7 +281,8 @@ body {
   color: var(--text-secondary);
 }
 
-#error-mode-label {
+#error-mode-label,
+#auto-read-label {
   font-size: 0.85rem;
   display: flex;
   align-items: center;

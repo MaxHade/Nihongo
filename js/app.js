@@ -797,6 +797,12 @@ const App = (() => {
       navigate(`#learn/${category}/${sub}${mode}`);
     };
 
+    const autoReadToggle = document.getElementById('auto-read-toggle');
+    autoReadToggle.checked = localStorage.getItem('nihongo_auto_read') === 'true';
+    autoReadToggle.onchange = () => {
+      localStorage.setItem('nihongo_auto_read', autoReadToggle.checked);
+    };
+
     currentCardIndex = 0;
     sessionRatings = { again: 0, easy: 0 };
 
@@ -873,6 +879,11 @@ const App = (() => {
       }
 
       input.focus();
+    }
+
+    // Auto-speak when toggle is active
+    if (document.getElementById('auto-read-toggle').checked) {
+      Speech.speak(isRevealCard(card) ? card.back : card.front);
     }
   }
 

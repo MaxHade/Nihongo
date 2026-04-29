@@ -11,7 +11,7 @@ const Stats = (() => {
     cards.forEach(card => {
       const p = Storage.getProgress(card.id);
       if (p) {
-        learned++;
+        if (p.lastRating === 'easy') learned++;
         if (p.lastRating && ratings[p.lastRating] !== undefined) {
           ratings[p.lastRating]++;
         }
@@ -30,13 +30,14 @@ const Stats = (() => {
     const allCards = Flashcard.getAllCards();
     const total = allCards.length;
     const progress = Storage.getAllProgress();
-    const learned = Object.keys(progress).length;
+    let learned = 0;
     const ratings = { again: 0, easy: 0 };
 
     Object.values(progress).forEach(p => {
       if (p.lastRating && ratings[p.lastRating] !== undefined) {
         ratings[p.lastRating]++;
       }
+      if (p.lastRating === 'easy') learned++;
     });
 
     const rated = ratings.again + ratings.easy;
@@ -127,7 +128,7 @@ const Stats = (() => {
     const total = cards.length;
     if (total === 0) return { total: 0, learned: 0, percent: 0 };
     let learned = 0;
-    cards.forEach(card => { if (Storage.getProgress(card.id)) learned++; });
+    cards.forEach(card => { const p = Storage.getProgress(card.id); if (p && p.lastRating === 'easy') learned++; });
     return { total, learned, percent: Math.round((learned / total) * 100) };
   }
 
