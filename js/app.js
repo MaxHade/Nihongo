@@ -881,8 +881,8 @@ const App = (() => {
       input.focus();
     }
 
-    // Auto-speak when toggle is active
-    if (document.getElementById('auto-read-toggle').checked) {
+    // Auto-speak when toggle is active (skip for hiragana/katakana – would give away the answer)
+    if (document.getElementById('auto-read-toggle').checked && card.category !== 'hiragana' && card.category !== 'katakana') {
       Speech.speak(isRevealCard(card) ? card.back : card.front);
     }
   }
