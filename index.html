@@ -40,12 +40,16 @@
         <label id="error-mode-label">
           <input type="checkbox" id="error-mode-toggle"> Nur Nochmal
         </label>
+        <label id="auto-read-label">
+          <input type="checkbox" id="auto-read-toggle"> Vorlesen
+        </label>
       </div>
       <div id="flashcard-container">
         <div id="flashcard" class="flashcard">
           <div id="card-front" class="card-front"></div>
           <div id="card-hint" class="card-hint"></div>
           <div style="display:flex;gap:8px;align-items:center;">
+            <button id="card-audio" class="audio-btn" aria-label="Aussprechen">🔊</button>
             <button id="card-stroke-btn" class="audio-btn hidden" aria-label="Strichfolge">筆</button>
           </div>
         </div>

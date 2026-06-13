@@ -797,6 +797,14 @@ const App = (() => {
       navigate(`#learn/${category}/${sub}${mode}`);
     };
 
+    // Vorlesen-Toggle: bei Hiragana/Katakana ausblenden (würde das Romaji verraten)
+    const autoReadToggle = document.getElementById('auto-read-toggle');
+    document.getElementById('auto-read-label').classList.toggle('hidden', category === 'hiragana' || category === 'katakana');
+    autoReadToggle.checked = localStorage.getItem('nihongo_auto_read') === 'true';
+    autoReadToggle.onchange = () => {
+      localStorage.setItem('nihongo_auto_read', autoReadToggle.checked);
+    };
+
     currentCardIndex = 0;
     sessionRatings = { again: 0, easy: 0 };
 
@@ -827,6 +835,15 @@ const App = (() => {
 
     document.getElementById('card-front').textContent = card.front;
     document.getElementById('card-hint').textContent = card.hint || '';
+
+    // Audio: manueller Vorlese-Button – bei Hiragana/Katakana ausgeblendet (würde das Romaji verraten)
+    const audioBtn = document.getElementById('card-audio');
+    if (card.category === 'hiragana' || card.category === 'katakana') {
+      audioBtn.classList.add('hidden');
+    } else {
+      audioBtn.classList.remove('hidden');
+      audioBtn.onclick = () => Speech.speak(card.front);
+    }
 
     // Stroke order button for kanji
     const strokeBtn = document.getElementById('card-stroke-btn');
@@ -866,6 +883,11 @@ const App = (() => {
       }
 
       input.focus();
+    }
+
+    // Auto-Vorlesen, wenn Toggle aktiv (bei Hiragana/Katakana übersprungen – würde das Romaji verraten)
+    if (document.getElementById('auto-read-toggle').checked && card.category !== 'hiragana' && card.category !== 'katakana') {
+      Speech.speak(card.front);
     }
   }
 
