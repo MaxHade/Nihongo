@@ -797,12 +797,6 @@ const App = (() => {
       navigate(`#learn/${category}/${sub}${mode}`);
     };
 
-    const autoReadToggle = document.getElementById('auto-read-toggle');
-    autoReadToggle.checked = localStorage.getItem('nihongo_auto_read') === 'true';
-    autoReadToggle.onchange = () => {
-      localStorage.setItem('nihongo_auto_read', autoReadToggle.checked);
-    };
-
     currentCardIndex = 0;
     sessionRatings = { again: 0, easy: 0 };
 
@@ -833,13 +827,6 @@ const App = (() => {
 
     document.getElementById('card-front').textContent = card.front;
     document.getElementById('card-hint').textContent = card.hint || '';
-
-    // Audio: for reverse kana cards, speak the back (Japanese character)
-    if (isRevealCard(card)) {
-      document.getElementById('card-audio').onclick = () => Speech.speak(card.back);
-    } else {
-      document.getElementById('card-audio').onclick = () => Speech.speak(card.front);
-    }
 
     // Stroke order button for kanji
     const strokeBtn = document.getElementById('card-stroke-btn');
@@ -879,11 +866,6 @@ const App = (() => {
       }
 
       input.focus();
-    }
-
-    // Auto-speak when toggle is active (skip for hiragana/katakana – would give away the romaji)
-    if (document.getElementById('auto-read-toggle').checked && card.category !== 'hiragana' && card.category !== 'katakana') {
-      Speech.speak(isRevealCard(card) ? card.back : card.front);
     }
   }
 
