@@ -42,6 +42,10 @@ const Flashcard = (() => {
     if ((category === 'hiragana' || category === 'katakana') && sub === 'all_rev') {
       return getAllCards().filter(c => c.category === category && ['gojuuon_rev', 'dakuten_rev', 'combo_rev'].includes(c.sub));
     }
+    // Virtual subcategory: all counters at once
+    if (category === 'numbers' && sub === 'counters') {
+      return getAllCards().filter(c => c.category === 'numbers' && c.sub.startsWith('counters_'));
+    }
     return getAllCards().filter(c => c.category === category && c.sub === sub);
   }
 

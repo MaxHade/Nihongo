@@ -23,7 +23,19 @@ const App = (() => {
     kanji:       { emoji: '漢', name: 'Kanji', subs: { n5: 'JLPT N5' } },
     dates:       { emoji: '📅', name: 'Datum', subs: { weekdays: 'Wochentage', months: 'Monate', days: 'Tage 1-31', expressions: 'Zeitausdrücke', seasons: 'Jahreszeiten', random_date: 'Zufälliges Datum' } },
     times:       { emoji: '🕐', name: 'Uhrzeiten', subs: { hours: 'Stunden', minutes: 'Minuten', duration: 'Dauer', random_time: 'Zufällige Uhrzeit' } },
-    numbers:     { emoji: '🔢', name: 'Zahlen', subs: { basic: 'Grundzahlen', counters: 'Zählwörter' } },
+    numbers:     { emoji: '🔢', name: 'Zahlen', subs: {
+      basic: 'Grundzahlen',
+      counters: 'Zählwörter (alle)',
+      counters_general: 'Zählwörter: つ – allgemeine Dinge',
+      counters_people: 'Zählwörter: 人 – Personen',
+      counters_flat: 'Zählwörter: 枚 – flache Dinge',
+      counters_long: 'Zählwörter: 本 – lange Dinge / Flaschen',
+      counters_animals: 'Zählwörter: 匹 – kleine Tiere',
+      counters_machines: 'Zählwörter: 台 – Maschinen / Fahrzeuge',
+      counters_floors: 'Zählwörter: 階 – Stockwerke',
+      counters_books: 'Zählwörter: 冊 – Bücher',
+      counters_cups: 'Zählwörter: 杯 – Tassen / Gläser'
+    } },
     vocabulary:  { emoji: '📖', name: 'Vokabeln', subs: { family: 'Familie', i_adjectives: 'い-Adjektive', na_adjectives: 'な-Adjektive', countries: 'Länder', verbs: 'Verben', greetings: 'Floskeln', colors: 'Farben', food: 'Essen & Trinken', directions: 'Richtungen', body: 'Körperteile' } },
     particles:   { emoji: '🔗', name: 'Partikeln', subs: { particles: 'Alle Partikeln' } },
     lessons:     { emoji: '📝', name: 'Lektionen', subs: {
@@ -1251,7 +1263,7 @@ const App = (() => {
 
     for (const [sub, subName] of Object.entries(meta.subs)) {
       // Skip reverse/virtual subs and empty subs in list view
-      if (sub.endsWith('_rev') || sub === 'all' || sub === 'all_rev' || sub === 'random_time' || sub === 'random_date') continue;
+      if (sub.endsWith('_rev') || sub === 'all' || sub === 'all_rev' || sub === 'counters' || sub === 'random_time' || sub === 'random_date') continue;
       const cards = Flashcard.getCardsBySubcategory(category, sub);
       if (cards.length === 0) continue;
 
@@ -1359,7 +1371,7 @@ const App = (() => {
 
     document.getElementById('list-back').onclick = () => {
       const listSubs = Object.keys(meta?.subs || {}).filter(s =>
-        !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'random_time' && s !== 'random_date' &&
+        !s.endsWith('_rev') && s !== 'all' && s !== 'all_rev' && s !== 'counters' && s !== 'random_time' && s !== 'random_date' &&
         Flashcard.getCardsBySubcategory(category, s).length > 0
       );
       if (listSubs.length <= 1) {
